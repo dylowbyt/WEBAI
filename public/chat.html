@@ -6,7 +6,6 @@
   <title>XYA AI — Chat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -14,124 +13,77 @@
       --primary: #4f46e5; --primary-dark: #3730a3; --primary-light: #eef2ff;
       --cyan: #06b6d4; --text: #0f172a; --text-muted: #64748b;
       --border: #e2e8f0; --bg: #ffffff; --sidebar-bg: #f8faff;
-      --radius: 14px; --shadow: 0 4px 24px rgba(79,70,229,0.08);
+      --radius: 14px;
     }
 
     html, body { height: 100%; overflow: hidden; }
-    body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text); display: flex; }
+    body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
 
-    /* ─── SIDEBAR ─────────────────────────────────── */
-    .sidebar {
-      width: 272px; min-width: 272px; height: 100vh;
-      background: var(--sidebar-bg); border-right: 1px solid var(--border);
-      display: flex; flex-direction: column; position: relative; z-index: 10;
+    /* ─── HEADER ──────────────────────────────────── */
+    .top-bar {
+      height: 58px; min-height: 58px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 18px; gap: 12px; z-index: 50;
+      background: white;
     }
-    .sidebar-head { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); }
-    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .logo-icon {
-      width: 44px; height: 44px; border-radius: 11px; overflow: hidden;
+    .top-bar-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+    .hamburger-btn {
+      background: none; border: none; cursor: pointer; color: var(--text);
+      padding: 7px; border-radius: 9px; display: flex; align-items: center;
+      transition: background 0.15s;
+    }
+    .hamburger-btn:hover { background: var(--sidebar-bg); }
+    .hamburger-btn svg { width: 22px; height: 22px; display: block; }
+    .top-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+    .top-logo-icon {
+      width: 38px; height: 38px; border-radius: 10px; overflow: hidden;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 8px rgba(79,70,229,0.18); flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(79,70,229,0.18);
     }
-    .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
-    .logo-name { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
-    .logo-name span { color: var(--primary); }
-    .btn-new {
-      width: 100%; padding: 10px 14px; border-radius: 10px;
-      background: var(--primary); color: white; border: none;
-      font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600;
-      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
-      transition: all 0.2s;
-    }
-    .btn-new:hover { background: var(--primary-dark); }
-    .btn-new svg { width: 16px; height: 16px; }
+    .top-logo-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .top-logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+    .top-logo-text span { color: var(--primary); }
 
-    .sidebar-label {
-      padding: 14px 16px 6px; font-size: 11px; font-weight: 600;
-      color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;
-    }
-
-    .conv-list { flex: 1; overflow-y: auto; padding: 0 8px 8px; }
-    .conv-list::-webkit-scrollbar { width: 4px; }
-    .conv-list::-webkit-scrollbar-track { background: transparent; }
-    .conv-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-    .conv-item {
-      display: flex; align-items: center; gap: 8px; padding: 9px 10px;
-      border-radius: 10px; cursor: pointer; transition: all 0.15s; position: relative;
-    }
-    .conv-item:hover { background: rgba(79,70,229,0.06); }
-    .conv-item.active { background: var(--primary-light); }
-    .conv-icon { font-size: 14px; flex-shrink: 0; }
-    .conv-title {
-      flex: 1; font-size: 13px; font-weight: 500; color: var(--text);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .conv-item.active .conv-title { color: var(--primary); font-weight: 600; }
-    .conv-del {
-      opacity: 0; background: none; border: none; cursor: pointer;
-      color: var(--text-muted); padding: 3px; border-radius: 6px;
-      transition: all 0.15s; flex-shrink: 0;
-    }
-    .conv-item:hover .conv-del { opacity: 1; }
-    .conv-del:hover { background: #fee2e2; color: #dc2626; }
-    .conv-del svg { width: 14px; height: 14px; display: block; }
-
-    .sidebar-footer { border-top: 1px solid var(--border); padding: 12px 14px; }
-    .lang-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .lang-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+    .top-bar-right { display: flex; align-items: center; gap: 10px; }
     .lang-switch { display: flex; background: var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
     .lang-btn {
-      padding: 4px 12px; border-radius: 6px; border: none;
+      padding: 4px 10px; border-radius: 6px; border: none;
       font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600;
       cursor: pointer; transition: all 0.15s; background: transparent; color: var(--text-muted);
     }
     .lang-btn.active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .account-btn {
+      width: 36px; height: 36px; border-radius: 50%; overflow: hidden;
+      border: 2px solid var(--border); cursor: pointer; transition: border-color 0.2s;
+      display: flex; align-items: center; justify-content: center; background: var(--sidebar-bg);
+      position: relative;
+    }
+    .account-btn:hover { border-color: var(--primary); }
+    .account-btn img { width: 100%; height: 100%; object-fit: cover; }
+    .account-dropdown {
+      display: none; position: absolute; top: calc(100% + 8px); right: 0;
+      background: white; border: 1px solid var(--border); border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(15,23,42,0.12); padding: 8px; min-width: 220px;
+      z-index: 200;
+    }
+    .account-dropdown.show { display: block; }
+    .acct-info { padding: 10px 12px 12px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+    .acct-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .acct-email { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .acct-menu-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+      border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 500;
+      color: var(--text); transition: background 0.15s; width: 100%; border: none;
+      background: none; font-family: 'Sora', sans-serif; text-align: left;
+    }
+    .acct-menu-item:hover { background: var(--sidebar-bg); }
+    .acct-menu-item.danger:hover { background: #fee2e2; color: #dc2626; }
+    .acct-menu-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 
-    .user-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px; border-radius: 10px; cursor: default; transition: all 0.15s;
-    }
-    .user-row:hover { background: rgba(0,0,0,0.04); }
-    .user-avatar {
-      width: 34px; height: 34px; border-radius: 50%; background: var(--primary-light);
-      display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
-    }
-    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .user-info { flex: 1; min-width: 0; }
-    .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .user-email { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .logout-btn {
-      background: none; border: none; cursor: pointer; color: var(--text-muted);
-      padding: 6px; border-radius: 7px; transition: all 0.15s; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .logout-btn:hover { background: #fee2e2; color: #dc2626; }
-    .logout-btn svg { width: 16px; height: 16px; display: block; }
+    /* ─── MAIN BODY ───────────────────────────────── */
+    .app-body { flex: 1; display: flex; overflow: hidden; }
 
-    /* ─── MAIN CHAT ───────────────────────────────── */
-    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-
-    .chat-header {
-      padding: 0 20px; height: 60px; min-height: 60px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 12px;
-    }
-    .chat-title { font-size: 15px; font-weight: 600; color: var(--text); }
-    .chat-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
-    .header-title-group { flex: 1; min-width: 0; }
-    .mobile-menu-btn {
-      display: none; background: none; border: none; cursor: pointer;
-      color: var(--text); padding: 6px; border-radius: 8px; flex-shrink: 0;
-    }
-    .mobile-menu-btn svg { width: 22px; height: 22px; display: block; }
-    .mobile-logout-btn {
-      display: none; background: none; border: none; cursor: pointer;
-      color: var(--text-muted); padding: 6px; border-radius: 8px; flex-shrink: 0;
-      transition: all 0.15s;
-    }
-    .mobile-logout-btn:hover { background: #fee2e2; color: #dc2626; }
-    .mobile-logout-btn svg { width: 20px; height: 20px; display: block; }
+    /* ─── MAIN CHAT (left) ───────────────────────── */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 
     /* ─── MESSAGES ───────────────────────────────── */
     .messages {
@@ -145,12 +97,9 @@
     .welcome {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      text-align: center; padding: 40px 24px; gap: 0;
+      text-align: center; padding: 40px 24px;
     }
-    .welcome-icon {
-      width: 72px; height: 72px; border-radius: 18px; margin-bottom: 20px; overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-    }
+    .welcome-icon { width: 72px; height: 72px; border-radius: 18px; margin-bottom: 20px; overflow: hidden; }
     .welcome-icon img { width: 100%; height: 100%; object-fit: cover; }
     .welcome h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 10px; }
     .welcome p { color: var(--text-muted); font-size: 15px; max-width: 380px; line-height: 1.6; margin-bottom: 28px; }
@@ -172,34 +121,24 @@
     .msg-avatar-chat.ai img { width: 100%; height: 100%; object-fit: cover; }
     .msg-avatar-chat.user { background: #e2e8f0; font-size: 16px; }
     .msg-avatar-chat img { width: 100%; height: 100%; object-fit: cover; }
-
     .msg-content { flex: 1; min-width: 0; }
     .msg-sender { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
-    .msg-bubble-chat {
-      padding: 14px 18px; border-radius: 16px; font-size: 14.5px; line-height: 1.7;
-      max-width: 100%; word-break: break-word;
-    }
+    .msg-bubble-chat { padding: 14px 18px; border-radius: 16px; font-size: 14.5px; line-height: 1.7; max-width: 100%; word-break: break-word; }
     .ai-bubble { background: var(--sidebar-bg); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
     .user-bubble { background: var(--primary); color: white; border-bottom-right-radius: 4px; margin-left: auto; }
     .user-row-msg .msg-content { display: flex; flex-direction: column; align-items: flex-end; }
     .user-row-msg .msg-sender { text-align: right; }
-
-    /* Image preview in user message */
     .user-image-preview { max-width: 260px; border-radius: 10px; margin-bottom: 6px; display: block; }
 
-    /* Generated image/video display */
     .gen-image-wrap { margin-top: 8px; }
     .gen-image-wrap img { max-width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; }
-    .gen-video-wrap { margin-top: 8px; }
-    .gen-video-wrap video { max-width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; }
     .gen-image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 8px; }
     .gen-image-grid img { width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; cursor: pointer; transition: transform 0.2s; }
     .gen-image-grid img:hover { transform: scale(1.02); }
+    .gen-video-wrap { margin-top: 8px; }
+    .gen-video-wrap video { max-width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; }
     .gen-status { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; padding: 8px 0; }
-    .gen-status .spinner {
-      width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--primary);
-      border-radius: 50%; animation: spin 0.8s linear infinite;
-    }
+    .gen-status .spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Markdown styles */
@@ -207,13 +146,12 @@
     .ai-bubble p:last-child { margin-bottom: 0; }
     .ai-bubble ul, .ai-bubble ol { padding-left: 20px; margin-bottom: 10px; }
     .ai-bubble li { margin-bottom: 4px; }
-    .ai-bubble code { background: #e8f0fe; color: var(--primary); padding: 2px 6px; border-radius: 5px; font-size: 13px; font-family: 'Courier New', monospace; }
-    .ai-bubble pre { background: #1e293b; border-radius: 10px; padding: 16px; margin: 10px 0; overflow-x: auto; position: relative; }
+    .ai-bubble code { background: #e8f0fe; color: var(--primary); padding: 2px 6px; border-radius: 5px; font-size: 13px; font-family: monospace; }
+    .ai-bubble pre { background: #1e293b; border-radius: 10px; padding: 16px; margin: 10px 0; overflow-x: auto; }
     .ai-bubble pre code { background: none; color: #e2e8f0; padding: 0; font-size: 13px; }
     .ai-bubble h1, .ai-bubble h2, .ai-bubble h3 { margin: 12px 0 6px; font-weight: 700; }
     .ai-bubble h1 { font-size: 18px; } .ai-bubble h2 { font-size: 16px; } .ai-bubble h3 { font-size: 15px; }
     .ai-bubble strong { font-weight: 700; }
-    .ai-bubble em { font-style: italic; }
     .ai-bubble blockquote { border-left: 3px solid var(--primary); padding-left: 14px; color: var(--text-muted); margin: 8px 0; }
     .ai-bubble table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
     .ai-bubble th { background: var(--primary-light); padding: 8px 12px; text-align: left; font-weight: 600; border: 1px solid var(--border); }
@@ -225,13 +163,10 @@
     @keyframes typingAnim { 0%,80%,100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
 
     /* ─── INPUT AREA ──────────────────────────────── */
-    .input-area { padding: 10px 20px 14px; border-top: 1px solid var(--border); }
-
-    /* Gen settings panel */
+    .input-area { padding: 10px 20px 14px; border-top: 1px solid var(--border); background: white; }
     .gen-settings {
       display: none; background: var(--sidebar-bg); border: 1px solid var(--border);
-      border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; gap: 10px;
-      flex-wrap: wrap;
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; gap: 10px; flex-wrap: wrap;
     }
     .gen-settings.show { display: flex; }
     .gen-row { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; align-items: center; }
@@ -239,76 +174,48 @@
     .gen-setting-item label { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
     .gen-setting-item select, .gen-setting-item input[type="text"] {
       padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border);
-      font-family: 'Sora', sans-serif; font-size: 12px; background: white;
-      color: var(--text); outline: none; max-width: 130px;
+      font-family: 'Sora', sans-serif; font-size: 12px; background: white; color: var(--text); outline: none; max-width: 140px;
     }
-    .gen-setting-item select:focus, .gen-setting-item input:focus { border-color: var(--primary); }
+    .gen-setting-item select:focus { border-color: var(--primary); }
     .api-key-row { width: 100%; display: flex; align-items: center; gap: 8px; }
     .api-key-row label { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
-    .api-key-row input {
-      flex: 1; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border);
-      font-family: 'Sora', sans-serif; font-size: 12px; background: white;
-      color: var(--text); outline: none;
-    }
+    .api-key-row input { flex: 1; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); font-family: 'Sora', sans-serif; font-size: 12px; background: white; color: var(--text); outline: none; }
     .api-key-row input:focus { border-color: var(--primary); }
     .gen-negative-row { width: 100%; display: flex; align-items: center; gap: 8px; }
     .gen-negative-row label { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
-    .gen-negative-row input {
-      flex: 1; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border);
-      font-family: 'Sora', sans-serif; font-size: 12px; background: white;
-      color: var(--text); outline: none;
-    }
+    .gen-negative-row input { flex: 1; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); font-family: 'Sora', sans-serif; font-size: 12px; background: white; color: var(--text); outline: none; }
 
-    /* File preview badge */
     .file-preview-area {
       display: none; margin-bottom: 8px; padding: 8px 10px;
       background: var(--primary-light); border: 1px solid #c7d2fe; border-radius: 10px;
       align-items: center; gap: 10px; flex-wrap: wrap;
     }
     .file-preview-area.show { display: flex; }
-    .file-badge {
-      display: flex; align-items: center; gap: 6px;
-      padding: 4px 10px; border-radius: 8px; background: white;
-      border: 1px solid #c7d2fe; font-size: 12px; font-weight: 600; color: var(--primary);
-    }
-    .file-badge-remove {
-      background: none; border: none; cursor: pointer; color: #94a3b8;
-      padding: 1px 3px; border-radius: 4px; font-size: 14px; line-height: 1;
-      transition: all 0.15s;
-    }
+    .file-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; background: white; border: 1px solid #c7d2fe; font-size: 12px; font-weight: 600; color: var(--primary); }
+    .file-badge-remove { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 1px 3px; border-radius: 4px; font-size: 14px; line-height: 1; }
     .file-badge-remove:hover { color: #dc2626; }
-    .file-img-preview {
-      max-height: 60px; max-width: 80px; border-radius: 6px; object-fit: cover;
-      border: 1px solid #c7d2fe;
-    }
+    .file-img-preview { max-height: 60px; max-width: 80px; border-radius: 6px; object-fit: cover; border: 1px solid #c7d2fe; }
 
-    /* Input wrap — ChatGPT style */
     .input-wrap {
       display: flex; align-items: flex-end; gap: 8px;
       background: var(--sidebar-bg); border: 1.5px solid var(--border);
-      border-radius: 16px; padding: 8px 8px 8px 12px;
-      transition: border-color 0.2s;
+      border-radius: 16px; padding: 8px 8px 8px 12px; transition: border-color 0.2s;
     }
     .input-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
-
     .left-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; padding-bottom: 2px; }
     .action-btn {
-      width: 34px; height: 34px; border-radius: 9px; border: none; flex-shrink: 0;
+      width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border);
       background: white; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center;
-      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .action-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
     .action-btn svg { width: 17px; height: 17px; display: block; }
-
     textarea {
       flex: 1; background: none; border: none; outline: none; resize: none;
       font-family: 'Sora', sans-serif; font-size: 14px; color: var(--text);
-      line-height: 1.5; max-height: 160px; min-height: 22px;
-      padding: 6px 0;
+      line-height: 1.5; max-height: 160px; min-height: 22px; padding: 6px 0;
     }
     textarea::placeholder { color: #94a3b8; }
-
     .send-btn {
       width: 36px; height: 36px; border-radius: 10px; border: none; flex-shrink: 0;
       background: var(--primary); color: white; cursor: pointer; transition: all 0.2s;
@@ -318,38 +225,193 @@
     .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
     .send-btn svg { width: 17px; height: 17px; }
 
-    /* ─── BOTTOM MODE TABS ──────────────────────── */
-    .bottom-tabs {
-      display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap;
-    }
+    .bottom-tabs { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
     .mode-tab {
-      display: flex; align-items: center; gap: 5px;
-      padding: 5px 12px; border-radius: 100px; border: 1.5px solid var(--border);
-      background: white; font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; gap: 5px; padding: 5px 12px;
+      border-radius: 100px; border: 1.5px solid var(--border); background: white;
+      font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600;
       cursor: pointer; transition: all 0.2s; color: var(--text-muted);
     }
     .mode-tab:hover { border-color: var(--primary); color: var(--primary); }
     .mode-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
-    .mode-tab-icon { font-size: 13px; }
     .input-hint { font-size: 11px; color: #94a3b8; margin-left: auto; white-space: nowrap; }
 
+    /* ─── RIGHT SIDEBAR ───────────────────────────── */
+    .sidebar {
+      width: 280px; min-width: 280px; height: 100%;
+      background: var(--sidebar-bg); border-left: 1px solid var(--border);
+      display: flex; flex-direction: column; position: relative; z-index: 10;
+      transition: transform 0.3s ease;
+    }
+    .sidebar-inner { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Search bar */
+    .sidebar-search { padding: 14px 14px 10px; }
+    .search-wrap {
+      display: flex; align-items: center; gap: 8px;
+      background: white; border: 1.5px solid var(--border); border-radius: 100px;
+      padding: 8px 14px; transition: border-color 0.2s;
+    }
+    .search-wrap:focus-within { border-color: var(--primary); }
+    .search-wrap svg { width: 15px; height: 15px; color: var(--text-muted); flex-shrink: 0; }
+    .search-wrap input {
+      flex: 1; border: none; outline: none; font-family: 'Sora', sans-serif;
+      font-size: 13px; color: var(--text); background: none;
+    }
+    .search-wrap input::placeholder { color: #94a3b8; }
+
+    /* New chat button */
+    .btn-new-chat {
+      margin: 0 14px 6px; padding: 10px 14px; border-radius: 10px;
+      background: white; border: 1px solid var(--border);
+      font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 9px; color: var(--text);
+      transition: all 0.2s; text-align: left;
+    }
+    .btn-new-chat:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+    .btn-new-chat svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* Conversation list */
+    .conv-section-label {
+      padding: 10px 16px 4px; font-size: 11px; font-weight: 700;
+      color: var(--text-muted); letter-spacing: 0.6px; text-transform: uppercase;
+    }
+    .conv-list { flex: 1; overflow-y: auto; padding: 0 8px 8px; }
+    .conv-list::-webkit-scrollbar { width: 4px; }
+    .conv-list::-webkit-scrollbar-track { background: transparent; }
+    .conv-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .conv-item {
+      display: flex; align-items: center; gap: 8px; padding: 9px 10px;
+      border-radius: 10px; cursor: pointer; transition: all 0.15s;
+    }
+    .conv-item:hover { background: rgba(79,70,229,0.06); }
+    .conv-item.active { background: var(--primary-light); }
+    .conv-title-text {
+      flex: 1; font-size: 13px; font-weight: 500; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .conv-item.active .conv-title-text { color: var(--primary); font-weight: 600; }
+    .conv-menu-btn {
+      opacity: 0; background: none; border: none; cursor: pointer; color: var(--text-muted);
+      padding: 3px; border-radius: 6px; transition: all 0.15s; flex-shrink: 0;
+    }
+    .conv-item:hover .conv-menu-btn { opacity: 1; }
+    .conv-menu-btn:hover { background: #fee2e2; color: #dc2626; }
+    .conv-menu-btn svg { width: 14px; height: 14px; display: block; }
+
+    /* Sidebar footer */
+    .sidebar-footer { border-top: 1px solid var(--border); padding: 8px; }
+    .sidebar-footer-btn {
+      display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px;
+      border-radius: 10px; border: none; background: none; cursor: pointer;
+      font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 500;
+      color: var(--text); transition: background 0.15s; text-align: left;
+    }
+    .sidebar-footer-btn:hover { background: rgba(79,70,229,0.06); }
+    .sidebar-footer-btn svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--text-muted); }
+
+    .btn-upgrade {
+      display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 14px;
+      border-radius: 12px; border: none; cursor: pointer;
+      font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700;
+      color: white; transition: all 0.2s; margin-top: 4px; text-align: left;
+      background: linear-gradient(135deg, #7c3aed, var(--primary), var(--cyan));
+    }
+    .btn-upgrade:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-upgrade svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* ─── UPGRADE MODAL ───────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5);
+      z-index: 300; align-items: center; justify-content: center; padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.show { display: flex; }
+    .upgrade-modal {
+      background: white; border-radius: 24px; max-width: 780px; width: 100%;
+      max-height: 90vh; overflow-y: auto; padding: 36px 32px;
+      box-shadow: 0 24px 80px rgba(15,23,42,0.2);
+      animation: modalIn 0.25s ease;
+    }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: none; } }
+    .modal-header { text-align: center; margin-bottom: 32px; }
+    .modal-header h2 { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+    .modal-header p { color: var(--text-muted); font-size: 15px; }
+    .modal-close {
+      position: absolute; top: 20px; right: 20px; background: var(--sidebar-bg);
+      border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+      font-size: 18px; color: var(--text-muted); display: flex; align-items: center;
+      justify-content: center; transition: all 0.15s; position: sticky; float: right;
+      margin-bottom: -32px;
+    }
+    .modal-close:hover { background: #fee2e2; color: #dc2626; }
+    .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+    .plan-card {
+      border-radius: 18px; padding: 24px 20px; border: 2px solid var(--border);
+      transition: all 0.25s; position: relative; cursor: default;
+    }
+    .plan-card.popular { border-color: var(--primary); }
+    .plan-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--primary); color: white; font-size: 11px; font-weight: 700;
+      padding: 3px 12px; border-radius: 100px; white-space: nowrap; letter-spacing: 0.3px;
+    }
+    .plan-card:hover { border-color: var(--primary); box-shadow: 0 8px 32px rgba(79,70,229,0.12); transform: translateY(-2px); }
+    .plan-icon { font-size: 28px; margin-bottom: 12px; }
+    .plan-name { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+    .plan-price { font-size: 26px; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
+    .plan-price span { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+    .plan-desc { font-size: 12px; color: var(--text-muted); margin: 8px 0 14px; line-height: 1.5; }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 7px; margin-bottom: 20px; }
+    .plan-features li { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; line-height: 1.4; }
+    .plan-features li::before { content: '✓'; color: #10b981; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .plan-features li.muted { color: var(--text-muted); }
+    .plan-features li.muted::before { content: '×'; color: #cbd5e1; }
+    .plan-btn {
+      width: 100%; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--primary);
+      font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; color: var(--primary); background: white;
+    }
+    .plan-btn:hover { background: var(--primary); color: white; }
+    .plan-btn.filled { background: var(--primary); color: white; }
+    .plan-btn.filled:hover { background: var(--primary-dark); }
+    .plan-btn.current { background: var(--sidebar-bg); color: var(--text-muted); border-color: var(--border); cursor: default; }
+    .plan-btn.current:hover { background: var(--sidebar-bg); color: var(--text-muted); }
+
+    /* max plan gradient */
+    .plan-card.max-plan { background: linear-gradient(135deg, #0f172a, #1e1b4b); border-color: #4f46e5; }
+    .plan-card.max-plan .plan-name, .plan-card.max-plan .plan-price, .plan-card.max-plan .plan-desc { color: white; }
+    .plan-card.max-plan .plan-price { color: #a5b4fc; }
+    .plan-card.max-plan .plan-features li { color: #c7d2fe; }
+    .plan-card.max-plan .plan-features li::before { color: #6ee7b7; }
+    .plan-card.max-plan .plan-btn { border-color: #a5b4fc; background: #a5b4fc; color: #0f172a; }
+    .plan-card.max-plan .plan-btn:hover { background: white; }
+
+    /* Sidebar overlay for mobile */
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 9; }
+    .sidebar-overlay.show { display: block; }
+
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .msg-row { animation: fadeIn 0.3s ease; }
 
     /* Hidden file inputs */
     #fileInput, #cameraInput { display: none; }
 
-    @media (max-width: 768px) {
-      .sidebar { position: fixed; left: -272px; top: 0; bottom: 0; z-index: 20; transition: left 0.3s ease; box-shadow: none; }
-      .sidebar.open { left: 0; box-shadow: 4px 0 24px rgba(0,0,0,0.12); }
+    @media (max-width: 900px) {
+      .sidebar {
+        position: fixed; right: -290px; top: 0; bottom: 0;
+        z-index: 20; box-shadow: none;
+      }
+      .sidebar.open { right: 0; box-shadow: -4px 0 24px rgba(0,0,0,0.12); }
       .sidebar-overlay.show { display: block; }
-      .mobile-menu-btn { display: flex; }
-      .mobile-logout-btn { display: flex; }
       .messages { padding: 16px 14px; }
       .input-area { padding: 8px 14px 12px; }
       .input-hint { display: none; }
-      .gen-settings { gap: 8px; }
+      .plans-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .plans-grid { grid-template-columns: 1fr; }
+      .upgrade-modal { padding: 24px 18px; }
     }
   </style>
 </head>
@@ -358,269 +420,372 @@
   <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx,.md,.csv,.json,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(event)" />
   <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" />
 
-  <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-  <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-head">
-      <div class="logo">
-        <div class="logo-icon">
-          <img src="/logo.png" alt="XYA AI" />
-        </div>
-        <span class="logo-name">XYA <span>AI</span></span>
-      </div>
-      <button class="btn-new" onclick="newChat()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span id="new-chat-label">Chat Baru</span>
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Riwayat percakapan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
       </button>
+      <a class="top-logo" href="/">
+        <div class="top-logo-icon"><img src="/logo.png" alt="XYA AI" /></div>
+        <span class="top-logo-text">XYA <span>AI</span></span>
+      </a>
     </div>
-    <div class="sidebar-label" id="history-label">Riwayat</div>
-    <div class="conv-list" id="convList"></div>
-    <div class="sidebar-footer">
-      <div class="lang-row">
-        <span class="lang-label" id="lang-label">Bahasa</span>
-        <div class="lang-switch">
-          <button class="lang-btn active" id="btn-id" onclick="setLang('id')">ID</button>
-          <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
-        </div>
+    <div class="top-bar-right">
+      <div class="lang-switch">
+        <button class="lang-btn active" id="btn-id" onclick="setLang('id')">ID</button>
+        <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
       </div>
-      <div class="user-row" id="userRow">
-        <div class="user-avatar" id="userAvatar">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="#64748b"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>
-        </div>
-        <div class="user-info">
-          <div class="user-name" id="userName">Loading...</div>
-          <div class="user-email" id="userEmail"></div>
-        </div>
-        <button class="logout-btn" title="Logout" onclick="logout()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </button>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Main -->
-  <div class="main">
-    <header class="chat-header">
-      <button class="mobile-menu-btn" onclick="openSidebar()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-      <div class="header-title-group">
-        <div class="chat-title" id="chatTitle">XYA AI</div>
-        <div class="chat-subtitle" id="chatSubtitle">Pilih atau buat chat baru</div>
-      </div>
-      <!-- Mobile logout button — visible only on mobile -->
-      <button class="mobile-logout-btn" title="Logout" onclick="logout()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </button>
-    </header>
-
-    <div class="messages" id="messages">
-      <div class="welcome" id="welcome">
-        <div class="welcome-icon">
-          <img src="/logo.png" alt="XYA AI" />
-        </div>
-        <h2 id="welcome-title">Halo! Ada yang bisa saya bantu?</h2>
-        <p id="welcome-desc">Saya XYA AI, siap membantu menjawab pertanyaan, menulis konten, generate gambar & video, dan banyak lagi.</p>
-        <div class="welcome-chips" id="chips">
-          <div class="chip" onclick="sendChip(this)">✍️ Bantu saya menulis</div>
-          <div class="chip" onclick="sendChip(this)">💻 Jelaskan kode ini</div>
-          <div class="chip" onclick="sendChip(this)">🔍 Ringkaskan teks</div>
-          <div class="chip" onclick="sendChip(this)">💡 Beri saya ide</div>
-          <div class="chip" onclick="sendChip(this)">📧 Tulis email</div>
-          <div class="chip" onclick="sendChip(this)">🌐 Terjemahkan</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="input-area">
-      <!-- Gen settings panel — shown when image/video mode active -->
-      <div class="gen-settings" id="genSettings">
-        <div class="api-key-row">
-          <label>🔑 Ruxa.ai API Key:</label>
-          <input type="password" id="ruxaApiKey" placeholder="Masukkan API Key Ruxa.ai..." />
-        </div>
-
-        <!-- Image settings -->
-        <div class="gen-row" id="imageSettingsRow">
-          <div class="gen-setting-item">
-            <label>Model:</label>
-            <select id="imageModel">
-              <option value="flux-schnell">Flux Schnell</option>
-              <option value="flux-dev">Flux Dev</option>
-              <option value="flux-pro">Flux Pro</option>
-              <option value="stable-diffusion-xl">SDXL</option>
-              <option value="ideogram">Ideogram</option>
-            </select>
-          </div>
-          <div class="gen-setting-item">
-            <label>Ukuran:</label>
-            <select id="imageSize">
-              <option value="1024x1024">1024×1024</option>
-              <option value="512x512">512×512</option>
-              <option value="768x768">768×768</option>
-              <option value="1024x768">1024×768 (Landscape)</option>
-              <option value="768x1024">768×1024 (Portrait)</option>
-              <option value="1280x720">1280×720 (HD)</option>
-              <option value="1920x1080">1920×1080 (Full HD)</option>
-            </select>
-          </div>
-          <div class="gen-setting-item">
-            <label>Kualitas:</label>
-            <select id="imageQuality">
-              <option value="standard">Standard</option>
-              <option value="hd">HD</option>
-            </select>
-          </div>
-          <div class="gen-setting-item">
-            <label>Jumlah:</label>
-            <select id="imageCount">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="4">4</option>
-            </select>
-          </div>
-          <div class="gen-setting-item">
-            <label>Gaya:</label>
-            <select id="imageStyle">
-              <option value="">Default</option>
-              <option value="photorealistic">Fotorealistik</option>
-              <option value="cinematic">Sinematik</option>
-              <option value="anime">Anime</option>
-              <option value="digital-art">Digital Art</option>
-              <option value="oil-painting">Lukisan Minyak</option>
-              <option value="watercolor">Cat Air</option>
-              <option value="sketch">Sketsa</option>
-            </select>
-          </div>
-          <div class="gen-negative-row">
-            <label>Negative:</label>
-            <input type="text" id="imageNegative" placeholder="Hal yang tidak diinginkan dalam gambar..." />
+      <!-- Google Account button -->
+      <div style="position:relative;">
+        <div class="account-btn" id="accountBtn" onclick="toggleAccountMenu()">
+          <div id="accountAvatar" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#64748b"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>
           </div>
         </div>
-
-        <!-- Video settings -->
-        <div class="gen-row" id="videoSettingsRow" style="display:none;">
-          <div class="gen-setting-item">
-            <label>Model:</label>
-            <select id="videoModel">
-              <option value="wan-t2v">Wan T2V</option>
-              <option value="kling-1.5">Kling 1.5</option>
-              <option value="kling-2.0">Kling 2.0</option>
-              <option value="luma-dream-machine">Luma Dream Machine</option>
-              <option value="minimax-video">MiniMax Video</option>
-            </select>
+        <div class="account-dropdown" id="accountDropdown">
+          <div class="acct-info">
+            <div class="acct-name" id="acctName">Loading...</div>
+            <div class="acct-email" id="acctEmail"></div>
           </div>
-          <div class="gen-setting-item">
-            <label>Durasi:</label>
-            <select id="videoDuration">
-              <option value="4">4 detik</option>
-              <option value="5">5 detik</option>
-              <option value="8">8 detik</option>
-              <option value="10">10 detik</option>
-            </select>
-          </div>
-          <div class="gen-setting-item">
-            <label>Resolusi:</label>
-            <select id="videoResolution">
-              <option value="720p">720p</option>
-              <option value="1080p">1080p</option>
-              <option value="480p">480p</option>
-            </select>
-          </div>
-          <div class="gen-setting-item">
-            <label>Rasio:</label>
-            <select id="videoAspect">
-              <option value="16:9">16:9</option>
-              <option value="9:16">9:16 (Vertikal)</option>
-              <option value="1:1">1:1</option>
-              <option value="4:3">4:3</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- File preview area -->
-      <div class="file-preview-area" id="filePreviewArea"></div>
-
-      <!-- Main input -->
-      <div class="input-wrap">
-        <div class="left-actions">
-          <button class="action-btn" title="Upload file" onclick="document.getElementById('fileInput').click()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-            </svg>
+          <button class="acct-menu-item" onclick="showUpgrade(); closeAccountMenu()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span id="acct-upgrade-label">Upgrade Premium</span>
           </button>
-          <button class="action-btn" title="Foto / Kamera" onclick="document.getElementById('cameraInput').click()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
+          <button class="acct-menu-item" onclick="closeAccountMenu()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 1 0 4.93 19.07"/></svg>
+            <span id="acct-settings-label">Setelan</span>
+          </button>
+          <button class="acct-menu-item danger" onclick="logout()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span id="acct-logout-label">Keluar</span>
           </button>
         </div>
-        <textarea id="msgInput" rows="1" placeholder="Tulis pesan..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-        <button class="send-btn" id="sendBtn" onclick="handleSend()" title="Kirim">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- APP BODY -->
+  <div class="app-body">
+
+    <!-- MAIN CHAT -->
+    <div class="main">
+      <div class="messages" id="messages">
+        <div class="welcome" id="welcome">
+          <div class="welcome-icon"><img src="/logo.png" alt="XYA AI" /></div>
+          <h2 id="welcome-title">Halo! Ada yang bisa saya bantu?</h2>
+          <p id="welcome-desc">Saya XYA AI, siap membantu menjawab pertanyaan, menulis konten, generate gambar & video, dan banyak lagi.</p>
+          <div class="welcome-chips" id="chips">
+            <div class="chip" onclick="sendChip(this)">✍️ Bantu saya menulis</div>
+            <div class="chip" onclick="sendChip(this)">💻 Jelaskan kode ini</div>
+            <div class="chip" onclick="sendChip(this)">🔍 Ringkaskan teks</div>
+            <div class="chip" onclick="sendChip(this)">💡 Beri saya ide</div>
+            <div class="chip" onclick="sendChip(this)">📧 Tulis email</div>
+            <div class="chip" onclick="sendChip(this)">🌐 Terjemahkan</div>
+          </div>
+        </div>
       </div>
 
-      <!-- Bottom mode tabs -->
-      <div class="bottom-tabs">
-        <button class="mode-tab active" id="tab-chat" onclick="setMode('chat')">
-          <span class="mode-tab-icon">💬</span> Chat
+      <!-- INPUT AREA -->
+      <div class="input-area">
+        <div class="gen-settings" id="genSettings">
+          <div class="api-key-row">
+            <label>🔑 Ruxa.ai API Key:</label>
+            <input type="password" id="ruxaApiKey" placeholder="Masukkan API Key Ruxa.ai..." />
+          </div>
+          <div class="gen-row" id="imageSettingsRow">
+            <div class="gen-setting-item">
+              <label>Model:</label>
+              <select id="imageModel">
+                <option value="flux-schnell">Flux Schnell</option>
+                <option value="flux-dev">Flux Dev</option>
+                <option value="flux-pro">Flux Pro</option>
+                <option value="stable-diffusion-xl">SDXL</option>
+                <option value="ideogram">Ideogram</option>
+              </select>
+            </div>
+            <div class="gen-setting-item">
+              <label>Ukuran:</label>
+              <select id="imageSize">
+                <option value="1024x1024">1024×1024</option>
+                <option value="512x512">512×512</option>
+                <option value="768x768">768×768</option>
+                <option value="1024x768">1024×768</option>
+                <option value="768x1024">768×1024</option>
+                <option value="1280x720">1280×720 HD</option>
+                <option value="1920x1080">1920×1080</option>
+              </select>
+            </div>
+            <div class="gen-setting-item">
+              <label>Jumlah:</label>
+              <select id="imageCount">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+            <div class="gen-setting-item">
+              <label>Gaya:</label>
+              <select id="imageStyle">
+                <option value="">Default</option>
+                <option value="photorealistic">Fotorealistik</option>
+                <option value="cinematic">Sinematik</option>
+                <option value="anime">Anime</option>
+                <option value="digital-art">Digital Art</option>
+                <option value="oil-painting">Lukisan Minyak</option>
+                <option value="watercolor">Cat Air</option>
+                <option value="sketch">Sketsa</option>
+              </select>
+            </div>
+            <div class="gen-negative-row">
+              <label>Negative:</label>
+              <input type="text" id="imageNegative" placeholder="Hal yang tidak diinginkan..." />
+            </div>
+          </div>
+          <div class="gen-row" id="videoSettingsRow" style="display:none;">
+            <div class="gen-setting-item">
+              <label>Model:</label>
+              <select id="videoModel">
+                <option value="wan-t2v">Wan T2V</option>
+                <option value="kling-1.5">Kling 1.5</option>
+                <option value="kling-2.0">Kling 2.0</option>
+                <option value="luma-dream-machine">Luma Dream Machine</option>
+                <option value="minimax-video">MiniMax Video</option>
+              </select>
+            </div>
+            <div class="gen-setting-item">
+              <label>Durasi:</label>
+              <select id="videoDuration">
+                <option value="4">4 detik</option>
+                <option value="5">5 detik</option>
+                <option value="8">8 detik</option>
+                <option value="10">10 detik</option>
+              </select>
+            </div>
+            <div class="gen-setting-item">
+              <label>Resolusi:</label>
+              <select id="videoResolution">
+                <option value="720p">720p</option>
+                <option value="1080p">1080p</option>
+                <option value="480p">480p</option>
+              </select>
+            </div>
+            <div class="gen-setting-item">
+              <label>Rasio:</label>
+              <select id="videoAspect">
+                <option value="16:9">16:9</option>
+                <option value="9:16">9:16 Vertikal</option>
+                <option value="1:1">1:1</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="file-preview-area" id="filePreviewArea"></div>
+
+        <div class="input-wrap">
+          <div class="left-actions">
+            <button class="action-btn" title="Upload file" onclick="document.getElementById('fileInput').click()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
+            <button class="action-btn" title="Foto / Kamera" onclick="document.getElementById('cameraInput').click()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </button>
+          </div>
+          <textarea id="msgInput" rows="1" placeholder="Tulis pesan..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="handleSend()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+
+        <div class="bottom-tabs">
+          <button class="mode-tab active" id="tab-chat" onclick="setMode('chat')">💬 Chat</button>
+          <button class="mode-tab" id="tab-image" onclick="setMode('image')">🎨 <span id="tab-image-label">Gambar</span></button>
+          <button class="mode-tab" id="tab-video" onclick="setMode('video')">🎬 Video</button>
+          <span class="input-hint" id="inputHint">Enter kirim • Shift+Enter baris baru</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-inner">
+        <!-- Search -->
+        <div class="sidebar-search">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchInput" placeholder="Telusuri percakapan" oninput="filterConvs(this.value)" />
+          </div>
+        </div>
+
+        <!-- New chat -->
+        <button class="btn-new-chat" onclick="newChat()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span id="new-chat-label">Percakapan baru</span>
         </button>
-        <button class="mode-tab" id="tab-image" onclick="setMode('image')">
-          <span class="mode-tab-icon">🎨</span> <span id="tab-image-label">Gambar</span>
+
+        <!-- Conversation list -->
+        <div class="conv-section-label" id="history-label">Percakapan</div>
+        <div class="conv-list" id="convList"></div>
+      </div>
+
+      <!-- Footer: Settings + Upgrade -->
+      <div class="sidebar-footer">
+        <button class="sidebar-footer-btn" onclick="closeAccountMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 1 0 4.93 19.07 10 10 0 0 0 19.07 4.93z"/></svg>
+          <span id="settings-btn-label">Setelan &amp; Bantuan</span>
         </button>
-        <button class="mode-tab" id="tab-video" onclick="setMode('video')">
-          <span class="mode-tab-icon">🎬</span> Video
+        <button class="btn-upgrade" onclick="showUpgrade()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span id="upgrade-btn-label">Upgrade Premium</span>
         </button>
-        <span class="input-hint" id="inputHint">Enter kirim • Shift+Enter baris baru</span>
+      </div>
+    </aside>
+  </div>
+
+  <!-- UPGRADE MODAL -->
+  <div class="modal-overlay" id="upgradeModal" onclick="hideUpgrade(event)">
+    <div class="upgrade-modal">
+      <button class="modal-close" onclick="hideUpgrade()">×</button>
+      <div class="modal-header">
+        <h2 id="upgrade-modal-title">Pilih Paket XYA AI</h2>
+        <p id="upgrade-modal-sub">Mulai gratis, upgrade kapanpun sesuai kebutuhanmu</p>
+      </div>
+      <div class="plans-grid">
+        <!-- FREE -->
+        <div class="plan-card">
+          <div class="plan-icon">🌱</div>
+          <div class="plan-name">Free</div>
+          <div class="plan-price">Rp 0 <span>/bln</span></div>
+          <div class="plan-desc">Untuk pemula yang ingin mencoba XYA AI</div>
+          <ul class="plan-features">
+            <li>Chat AI dasar (Claude)</li>
+            <li>10 pesan/hari</li>
+            <li>Riwayat 7 hari</li>
+            <li>1 bahasa</li>
+            <li class="muted">Generate gambar</li>
+            <li class="muted">Generate video</li>
+            <li class="muted">Upload file</li>
+          </ul>
+          <button class="plan-btn current">Paket Saat Ini</button>
+        </div>
+
+        <!-- BASIC -->
+        <div class="plan-card">
+          <div class="plan-icon">⚡</div>
+          <div class="plan-name">Basic</div>
+          <div class="plan-price">Rp 49K <span>/bln</span></div>
+          <div class="plan-desc">Untuk pengguna aktif sehari-hari</div>
+          <ul class="plan-features">
+            <li>Chat AI (Claude + GPT)</li>
+            <li>100 pesan/hari</li>
+            <li>Riwayat 30 hari</li>
+            <li>2 bahasa</li>
+            <li>5 gambar/hari (Ruxa.ai)</li>
+            <li class="muted">Generate video</li>
+            <li>Upload file (maks 5MB)</li>
+          </ul>
+          <button class="plan-btn" onclick="selectPlan('basic')">Pilih Basic</button>
+        </div>
+
+        <!-- PRO -->
+        <div class="plan-card popular">
+          <div class="plan-badge">✦ Terpopuler</div>
+          <div class="plan-icon">🚀</div>
+          <div class="plan-name">Pro</div>
+          <div class="plan-price">Rp 99K <span>/bln</span></div>
+          <div class="plan-desc">Untuk kreator & profesional produktif</div>
+          <ul class="plan-features">
+            <li>Chat AI tanpa batas</li>
+            <li>Pesan tanpa batas</li>
+            <li>Riwayat tak terbatas</li>
+            <li>Semua bahasa</li>
+            <li>30 gambar/hari (semua model)</li>
+            <li>5 video/hari (Ruxa.ai)</li>
+            <li>Upload file hingga 25MB</li>
+          </ul>
+          <button class="plan-btn filled" onclick="selectPlan('pro')">Pilih Pro</button>
+        </div>
+
+        <!-- MAX -->
+        <div class="plan-card max-plan">
+          <div class="plan-icon">👑</div>
+          <div class="plan-name">Max</div>
+          <div class="plan-price">Rp 199K <span>/bln</span></div>
+          <div class="plan-desc">Akses penuh tanpa batas untuk tim & bisnis</div>
+          <ul class="plan-features">
+            <li>Semua fitur Pro</li>
+            <li>Generate gambar tanpa batas</li>
+            <li>Generate video tanpa batas</li>
+            <li>Upload file hingga 100MB</li>
+            <li>Priority AI (response tercepat)</li>
+            <li>API access</li>
+            <li>Support 24/7 prioritas</li>
+          </ul>
+          <button class="plan-btn" onclick="selectPlan('max')">Pilih Max</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
   <script>
-    // ─── State ──────────────────────────────────────────────────
     let user = null;
     let conversations = [];
+    let allConversations = [];
     let activeConvId = null;
     let lang = localStorage.getItem('xyabot_lang') || 'id';
     let isStreaming = false;
     let currentMode = 'chat';
-    let pendingFile = null; // { name, type, dataUrl, isImage }
+    let pendingFile = null;
 
     const i18n = {
       id: {
-        'new-chat-label': 'Chat Baru', 'history-label': 'Riwayat', 'lang-label': 'Bahasa',
+        'new-chat-label': 'Percakapan baru', 'history-label': 'Percakapan',
         'welcome-title': 'Halo! Ada yang bisa saya bantu?',
         'welcome-desc': 'Saya XYA AI, siap membantu menjawab pertanyaan, menulis konten, generate gambar & video, dan banyak lagi.',
-        'chatSubtitle-noconv': 'Pilih atau buat chat baru', 'chatSubtitle-active': 'XYA AI siap membantu',
         'placeholder': 'Tulis pesan...', 'placeholder-image': 'Deskripsikan gambar yang ingin dibuat...', 'placeholder-video': 'Deskripsikan video yang ingin dibuat...',
         'inputHint': 'Enter kirim • Shift+Enter baris baru',
         'chips': ['✍️ Bantu saya menulis','💻 Jelaskan kode ini','🔍 Ringkaskan teks','💡 Beri saya ide','📧 Tulis email','🌐 Terjemahkan'],
-        'you': 'Kamu', 'thinking': 'Sedang berpikir...',
-        'tab-image-label': 'Gambar',
-        'gen-img-label': 'Generate Gambar',
-        'gen-vid-label': 'Generate Video',
+        'you': 'Kamu', 'tab-image-label': 'Gambar',
+        'gen-img-label': 'Generate Gambar', 'gen-vid-label': 'Generate Video',
+        'settings-btn-label': 'Setelan & Bantuan',
+        'upgrade-btn-label': 'Upgrade Premium',
+        'acct-upgrade-label': 'Upgrade Premium',
+        'acct-settings-label': 'Setelan',
+        'acct-logout-label': 'Keluar',
+        'upgrade-modal-title': 'Pilih Paket XYA AI',
+        'upgrade-modal-sub': 'Mulai gratis, upgrade kapanpun sesuai kebutuhanmu',
       },
       en: {
-        'new-chat-label': 'New Chat', 'history-label': 'History', 'lang-label': 'Language',
+        'new-chat-label': 'New conversation', 'history-label': 'Conversations',
         'welcome-title': 'Hello! How can I help you?',
-        'welcome-desc': 'I\'m XYA AI, ready to help answer questions, write content, generate images & videos, and much more.',
-        'chatSubtitle-noconv': 'Select or create a new chat', 'chatSubtitle-active': 'XYA AI is ready to help',
+        'welcome-desc': "I'm XYA AI, ready to help answer questions, write content, generate images & videos, and much more.",
         'placeholder': 'Type a message...', 'placeholder-image': 'Describe the image you want to create...', 'placeholder-video': 'Describe the video you want to create...',
         'inputHint': 'Enter to send • Shift+Enter for new line',
         'chips': ['✍️ Help me write','💻 Explain this code','🔍 Summarize text','💡 Give me ideas','📧 Write an email','🌐 Translate'],
-        'you': 'You', 'thinking': 'Thinking...',
-        'tab-image-label': 'Image',
-        'gen-img-label': 'Generate Image',
-        'gen-vid-label': 'Generate Video',
+        'you': 'You', 'tab-image-label': 'Image',
+        'gen-img-label': 'Generate Image', 'gen-vid-label': 'Generate Video',
+        'settings-btn-label': 'Settings & Help',
+        'upgrade-btn-label': 'Upgrade Premium',
+        'acct-upgrade-label': 'Upgrade Premium',
+        'acct-settings-label': 'Settings',
+        'acct-logout-label': 'Sign out',
+        'upgrade-modal-title': 'Choose Your XYA AI Plan',
+        'upgrade-modal-sub': 'Start free, upgrade anytime as you need',
       }
     };
-
-    function t(key) { return i18n[lang][key] || i18n['id'][key] || key; }
+    function t(k) { return i18n[lang][k] || i18n['id'][k] || k; }
 
     // ─── Init ────────────────────────────────────────────────────
     async function init() {
@@ -628,10 +793,10 @@
         const r = await fetch('/api/user');
         if (!r.ok) { location.href = '/'; return; }
         user = await r.json();
-        document.getElementById('userName').textContent = user.name;
-        document.getElementById('userEmail').textContent = user.email;
+        document.getElementById('acctName').textContent = user.name;
+        document.getElementById('acctEmail').textContent = user.email;
         if (user.avatar) {
-          document.getElementById('userAvatar').innerHTML = `<img src="${user.avatar}" alt="${user.name}">`;
+          document.getElementById('accountAvatar').innerHTML = `<img src="${user.avatar}" alt="${user.name}">`;
         }
         const savedKey = localStorage.getItem('ruxa_api_key');
         if (savedKey) document.getElementById('ruxaApiKey').value = savedKey;
@@ -640,40 +805,68 @@
       } catch(e) { location.href = '/'; }
     }
 
-    // ─── Mode Switching ──────────────────────────────────────────
+    // ─── Sidebar ─────────────────────────────────────────────────
+    function toggleSidebar() {
+      const s = document.getElementById('sidebar');
+      const o = document.getElementById('sidebarOverlay');
+      const isOpen = s.classList.contains('open');
+      s.classList.toggle('open', !isOpen);
+      o.classList.toggle('show', !isOpen);
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('show');
+    }
+
+    // ─── Account dropdown ─────────────────────────────────────────
+    function toggleAccountMenu() {
+      document.getElementById('accountDropdown').classList.toggle('show');
+    }
+    function closeAccountMenu() {
+      document.getElementById('accountDropdown').classList.remove('show');
+    }
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#accountBtn') && !e.target.closest('#accountDropdown')) closeAccountMenu();
+    });
+
+    // ─── Upgrade modal ────────────────────────────────────────────
+    function showUpgrade() {
+      document.getElementById('upgradeModal').classList.add('show');
+      closeSidebar();
+    }
+    function hideUpgrade(e) {
+      if (!e || e.target === document.getElementById('upgradeModal')) {
+        document.getElementById('upgradeModal').classList.remove('show');
+      }
+    }
+    function selectPlan(plan) {
+      alert(lang === 'id'
+        ? `Paket ${plan.charAt(0).toUpperCase() + plan.slice(1)} akan segera tersedia! Hubungi kami untuk info lebih lanjut.`
+        : `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan coming soon! Contact us for more information.`);
+    }
+
+    // ─── Mode switching ───────────────────────────────────────────
     function setMode(mode) {
       currentMode = mode;
-      ['chat','image','video'].forEach(m => {
-        document.getElementById('tab-' + m).classList.toggle('active', m === mode);
-      });
+      ['chat','image','video'].forEach(m => document.getElementById('tab-' + m).classList.toggle('active', m === mode));
       const settings = document.getElementById('genSettings');
       const imageRow = document.getElementById('imageSettingsRow');
       const videoRow = document.getElementById('videoSettingsRow');
       const input = document.getElementById('msgInput');
-
-      if (mode === 'chat') {
-        settings.classList.remove('show');
-        input.placeholder = t('placeholder');
-      } else if (mode === 'image') {
-        settings.classList.add('show');
-        imageRow.style.display = '';
-        videoRow.style.display = 'none';
-        input.placeholder = t('placeholder-image');
-      } else if (mode === 'video') {
-        settings.classList.add('show');
-        imageRow.style.display = 'none';
-        videoRow.style.display = '';
-        input.placeholder = t('placeholder-video');
-      }
+      if (mode === 'chat') { settings.classList.remove('show'); input.placeholder = t('placeholder'); }
+      else if (mode === 'image') { settings.classList.add('show'); imageRow.style.display = ''; videoRow.style.display = 'none'; input.placeholder = t('placeholder-image'); }
+      else if (mode === 'video') { settings.classList.add('show'); imageRow.style.display = 'none'; videoRow.style.display = ''; input.placeholder = t('placeholder-video'); }
     }
 
-    // ─── Language ────────────────────────────────────────────────
+    // ─── Language ─────────────────────────────────────────────────
     function applyLang(l, save = true) {
       lang = l;
       if (save) localStorage.setItem('xyabot_lang', l);
       document.getElementById('btn-id').classList.toggle('active', l === 'id');
       document.getElementById('btn-en').classList.toggle('active', l === 'en');
-      ['new-chat-label','history-label','lang-label','welcome-title','welcome-desc','inputHint','tab-image-label'].forEach(id => {
+      ['new-chat-label','history-label','inputHint','tab-image-label',
+       'settings-btn-label','upgrade-btn-label','acct-upgrade-label',
+       'acct-settings-label','acct-logout-label','upgrade-modal-title','upgrade-modal-sub'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = t(id);
       });
@@ -682,20 +875,15 @@
       else if (currentMode === 'image') input.placeholder = t('placeholder-image');
       else input.placeholder = t('placeholder-video');
       const chips = document.getElementById('chips');
-      if (chips) {
-        chips.querySelectorAll('.chip').forEach((c,i) => { c.textContent = t('chips')[i] || c.textContent; });
-      }
-      if (!activeConvId) document.getElementById('chatSubtitle').textContent = t('chatSubtitle-noconv');
-      else document.getElementById('chatSubtitle').textContent = t('chatSubtitle-active');
+      if (chips) chips.querySelectorAll('.chip').forEach((c,i) => { c.textContent = t('chips')[i] || c.textContent; });
     }
     function setLang(l) { applyLang(l); }
 
-    // ─── File Handling ───────────────────────────────────────────
+    // ─── File handling ────────────────────────────────────────────
     function handleFileSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
       event.target.value = '';
-
       const isImage = file.type.startsWith('image/');
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -704,95 +892,83 @@
       };
       reader.readAsDataURL(file);
     }
-
     function renderFilePreview() {
       const area = document.getElementById('filePreviewArea');
       if (!pendingFile) { area.innerHTML = ''; area.classList.remove('show'); return; }
       area.classList.add('show');
-      const isImg = pendingFile.isImage;
       area.innerHTML = `
-        ${isImg ? `<img class="file-img-preview" src="${pendingFile.dataUrl}" alt="preview" />` : ''}
+        ${pendingFile.isImage ? `<img class="file-img-preview" src="${pendingFile.dataUrl}" />` : ''}
         <div class="file-badge">
-          ${isImg ? '🖼️' : '📄'} ${escHtml(pendingFile.name.length > 30 ? pendingFile.name.slice(0,27)+'...' : pendingFile.name)}
+          ${pendingFile.isImage ? '🖼️' : '📄'} ${escHtml(pendingFile.name.length > 30 ? pendingFile.name.slice(0,27)+'...' : pendingFile.name)}
           <button class="file-badge-remove" onclick="clearFile()">×</button>
         </div>`;
     }
+    function clearFile() { pendingFile = null; renderFilePreview(); }
 
-    function clearFile() {
-      pendingFile = null;
-      renderFilePreview();
-    }
-
-    // ─── Conversations ───────────────────────────────────────────
+    // ─── Conversations ────────────────────────────────────────────
     async function loadConversations() {
       const r = await fetch('/api/conversations');
-      conversations = await r.json();
-      renderConvList();
+      allConversations = await r.json();
+      conversations = allConversations;
+      renderConvList(conversations);
     }
 
-    function renderConvList() {
-      const list = document.getElementById('convList');
-      list.innerHTML = '';
-      if (conversations.length === 0) {
-        list.innerHTML = `<div style="padding:12px 16px;font-size:12px;color:#94a3b8;text-align:center;">${lang==='id'?'Belum ada chat':'No chats yet'}</div>`;
+    function filterConvs(query) {
+      const q = query.toLowerCase();
+      conversations = q ? allConversations.filter(c => c.title.toLowerCase().includes(q)) : allConversations;
+      renderConvList(conversations);
+    }
+
+    function renderConvList(list) {
+      const el = document.getElementById('convList');
+      el.innerHTML = '';
+      if (!list.length) {
+        el.innerHTML = `<div style="padding:12px 16px;font-size:12px;color:#94a3b8;text-align:center;">${lang==='id'?'Belum ada percakapan':'No conversations yet'}</div>`;
         return;
       }
-      conversations.forEach(c => {
-        const el = document.createElement('div');
-        el.className = 'conv-item' + (c.id === activeConvId ? ' active' : '');
-        el.dataset.id = c.id;
-        el.innerHTML = `
-          <span class="conv-icon">💬</span>
-          <span class="conv-title">${escHtml(c.title)}</span>
-          <button class="conv-del" onclick="deleteConv(event,'${c.id}')" title="Hapus">
+      list.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'conv-item' + (c.id === activeConvId ? ' active' : '');
+        div.innerHTML = `
+          <span class="conv-title-text">${escHtml(c.title)}</span>
+          <button class="conv-menu-btn" onclick="deleteConv(event,'${c.id}')" title="Hapus">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
           </button>`;
-        el.onclick = (e) => { if (!e.target.closest('.conv-del')) selectConv(c.id); };
-        list.appendChild(el);
+        div.onclick = (e) => { if (!e.target.closest('.conv-menu-btn')) selectConv(c.id); };
+        el.appendChild(div);
       });
     }
 
     async function selectConv(id) {
       activeConvId = id;
-      closeSidebar();
-      renderConvList();
+      renderConvList(conversations);
       const r = await fetch(`/api/conversations/${id}`);
       const data = await r.json();
-      const conv = conversations.find(c => c.id === id);
-      document.getElementById('chatTitle').textContent = conv?.title || 'Chat';
-      document.getElementById('chatSubtitle').textContent = t('chatSubtitle-active');
       renderMessages(data.messages);
     }
 
     async function newChat() {
       const r = await fetch('/api/conversations', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ language: lang }) });
       const conv = await r.json();
-      conversations.unshift(conv);
+      allConversations.unshift(conv);
+      conversations = allConversations;
       activeConvId = conv.id;
-      renderConvList();
-      closeSidebar();
-      document.getElementById('chatTitle').textContent = conv.title;
-      document.getElementById('chatSubtitle').textContent = t('chatSubtitle-active');
+      renderConvList(conversations);
       showWelcome();
     }
 
     async function deleteConv(e, id) {
       e.stopPropagation();
       await fetch(`/api/conversations/${id}`, { method: 'DELETE' });
-      conversations = conversations.filter(c => c.id !== id);
-      if (activeConvId === id) {
-        activeConvId = null;
-        showWelcome();
-        document.getElementById('chatTitle').textContent = 'XYA AI';
-        document.getElementById('chatSubtitle').textContent = t('chatSubtitle-noconv');
-      }
-      renderConvList();
+      allConversations = allConversations.filter(c => c.id !== id);
+      conversations = allConversations;
+      if (activeConvId === id) { activeConvId = null; showWelcome(); }
+      renderConvList(conversations);
     }
 
-    // ─── Messages Rendering ──────────────────────────────────────
+    // ─── Messages ─────────────────────────────────────────────────
     function showWelcome() {
-      const msgs = document.getElementById('messages');
-      msgs.innerHTML = `
+      document.getElementById('messages').innerHTML = `
         <div class="welcome" id="welcome">
           <div class="welcome-icon"><img src="/logo.png" alt="XYA AI" /></div>
           <h2 id="welcome-title">${t('welcome-title')}</h2>
@@ -812,27 +988,17 @@
 
     function appendMessage(role, content, animate = true) {
       const container = document.getElementById('messages');
-      const welcome = document.getElementById('welcome');
-      if (welcome) welcome.remove();
-
+      document.getElementById('welcome')?.remove();
       const row = document.createElement('div');
       row.className = `msg-row ${role === 'user' ? 'user-row-msg' : ''}`;
       if (!animate) row.style.animation = 'none';
-
       const avatarHtml = role === 'user'
         ? `<div class="msg-avatar-chat user">${user?.avatar ? `<img src="${user.avatar}">` : '👤'}</div>`
-        : `<div class="msg-avatar-chat ai"><img src="/logo.png" alt="XYA AI"></div>`;
-
+        : `<div class="msg-avatar-chat ai"><img src="/logo.png"></div>`;
       const bubbleClass = role === 'user' ? 'user-bubble' : 'ai-bubble';
       const senderName = role === 'user' ? t('you') : 'XYA AI';
-      const renderedContent = role === 'ai' || role === 'assistant' ? marked.parse(content) : escHtml(content);
-
-      row.innerHTML = `
-        ${avatarHtml}
-        <div class="msg-content">
-          <div class="msg-sender">${senderName}</div>
-          <div class="msg-bubble-chat ${bubbleClass}">${renderedContent}</div>
-        </div>`;
+      const rendered = (role === 'ai' || role === 'assistant') ? marked.parse(content) : escHtml(content);
+      row.innerHTML = `${avatarHtml}<div class="msg-content"><div class="msg-sender">${senderName}</div><div class="msg-bubble-chat ${bubbleClass}">${rendered}</div></div>`;
       container.appendChild(row);
       scrollBottom();
       return row;
@@ -840,97 +1006,65 @@
 
     function appendMessageWithImage(imageDataUrl, text) {
       const container = document.getElementById('messages');
-      const welcome = document.getElementById('welcome');
-      if (welcome) welcome.remove();
+      document.getElementById('welcome')?.remove();
       const row = document.createElement('div');
       row.className = 'msg-row user-row-msg';
       const avatarHtml = `<div class="msg-avatar-chat user">${user?.avatar ? `<img src="${user.avatar}">` : '👤'}</div>`;
-      row.innerHTML = `
-        ${avatarHtml}
-        <div class="msg-content">
-          <div class="msg-sender">${t('you')}</div>
-          <div class="msg-bubble-chat user-bubble">
-            <img class="user-image-preview" src="${imageDataUrl}" alt="uploaded" />
-            ${text ? `<div style="margin-top:6px;">${escHtml(text)}</div>` : ''}
-          </div>
-        </div>`;
+      row.innerHTML = `${avatarHtml}<div class="msg-content"><div class="msg-sender">${t('you')}</div><div class="msg-bubble-chat user-bubble"><img class="user-image-preview" src="${imageDataUrl}" />${text ? `<div style="margin-top:6px;">${escHtml(text)}</div>` : ''}</div></div>`;
       container.appendChild(row);
       scrollBottom();
     }
 
     function appendTyping() {
       const container = document.getElementById('messages');
-      const welcome = document.getElementById('welcome');
-      if (welcome) welcome.remove();
+      document.getElementById('welcome')?.remove();
       const row = document.createElement('div');
       row.className = 'msg-row'; row.id = 'typingRow';
-      row.innerHTML = `
-        <div class="msg-avatar-chat ai"><img src="/logo.png" alt="XYA AI"></div>
-        <div class="msg-content">
-          <div class="msg-sender">XYA AI</div>
-          <div class="msg-bubble-chat ai-bubble" id="streamBubble">
-            <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
-          </div>
-        </div>`;
+      row.innerHTML = `<div class="msg-avatar-chat ai"><img src="/logo.png"></div><div class="msg-content"><div class="msg-sender">XYA AI</div><div class="msg-bubble-chat ai-bubble" id="streamBubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`;
       container.appendChild(row);
       scrollBottom();
     }
 
     function appendGenStatus(prompt, mode) {
       const container = document.getElementById('messages');
-      const welcome = document.getElementById('welcome');
-      if (welcome) welcome.remove();
+      document.getElementById('welcome')?.remove();
       const row = document.createElement('div');
       row.className = 'msg-row'; row.id = 'typingRow';
       const label = mode === 'image' ? t('gen-img-label') : t('gen-vid-label');
-      row.innerHTML = `
-        <div class="msg-avatar-chat ai"><img src="/logo.png" alt="XYA AI"></div>
-        <div class="msg-content">
-          <div class="msg-sender">XYA AI</div>
-          <div class="msg-bubble-chat ai-bubble" id="streamBubble">
-            <div class="gen-status"><div class="spinner"></div><span>${label}... "${escHtml(prompt.substring(0,60))}${prompt.length>60?'...':''}"</span></div>
-          </div>
-        </div>`;
+      row.innerHTML = `<div class="msg-avatar-chat ai"><img src="/logo.png"></div><div class="msg-content"><div class="msg-sender">XYA AI</div><div class="msg-bubble-chat ai-bubble" id="streamBubble"><div class="gen-status"><div class="spinner"></div><span>${label}... "${escHtml(prompt.substring(0,60))}${prompt.length>60?'...':''}"</span></div></div></div>`;
       container.appendChild(row);
       scrollBottom();
     }
 
-    function scrollBottom() {
-      const c = document.getElementById('messages');
-      c.scrollTop = c.scrollHeight;
-    }
+    function scrollBottom() { const c = document.getElementById('messages'); c.scrollTop = c.scrollHeight; }
 
-    // ─── Handle Send ─────────────────────────────────────────────
+    // ─── Handle Send ──────────────────────────────────────────────
     function handleSend() {
       if (currentMode === 'chat') sendMessage();
       else if (currentMode === 'image') generateImage();
       else if (currentMode === 'video') generateVideo();
     }
 
-    // ─── Chat ─────────────────────────────────────────────────────
     async function sendMessage() {
       if (isStreaming) return;
       const input = document.getElementById('msgInput');
       const text = input.value.trim();
       if (!text && !pendingFile) return;
-      if (!activeConvId) { await newChat(); }
+      if (!activeConvId) await newChat();
 
-      let messageText = text;
+      let msgText = text;
       let fileToSend = pendingFile;
-      pendingFile = null;
-      renderFilePreview();
-
+      pendingFile = null; renderFilePreview();
       input.value = ''; autoResize(input);
       document.getElementById('sendBtn').disabled = true;
       isStreaming = true;
 
-      // Show user message with image if present
-      if (fileToSend && fileToSend.isImage) {
+      if (fileToSend?.isImage) {
         appendMessageWithImage(fileToSend.dataUrl, text);
-        messageText = text + (text ? '\n\n' : '') + `[Gambar: ${fileToSend.name}]`;
+        msgText = text + (text ? '\n\n' : '') + `[Gambar: ${fileToSend.name}]`;
       } else if (fileToSend) {
         appendMessage('user', `📄 ${fileToSend.name}${text ? '\n' + text : ''}`);
-        messageText = `Tolong analisis file ini: ${fileToSend.name}\n\n${text}`;
+        msgText = `Tolong analisis file ini: ${fileToSend.name}\n\n${text}`;
       } else {
         appendMessage('user', text);
       }
@@ -939,17 +1073,14 @@
       try {
         const res = await fetch('/api/chat', {
           method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ conversationId: activeConvId, message: messageText, language: lang })
+          body: JSON.stringify({ conversationId: activeConvId, message: msgText, language: lang })
         });
-
         const bubble = document.getElementById('streamBubble');
         bubble.innerHTML = '';
         let fullText = '';
-
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
-
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -962,7 +1093,7 @@
               const data = JSON.parse(line.slice(6));
               if (data.text) { fullText += data.text; bubble.innerHTML = marked.parse(fullText); scrollBottom(); }
               if (data.done) { await loadConversations(); }
-              if (data.error) { bubble.innerHTML = `<span style="color:#ef4444">Error: ${escHtml(data.error)}</span>`; }
+              if (data.error) bubble.innerHTML = `<span style="color:#ef4444">Error: ${escHtml(data.error)}</span>`;
             } catch(e) {}
           }
         }
@@ -975,241 +1106,119 @@
       }
     }
 
-    // ─── Generate Image (Ruxa.ai) ─────────────────────────────────
     async function generateImage() {
       if (isStreaming) return;
       const input = document.getElementById('msgInput');
       let prompt = input.value.trim();
       if (!prompt) return;
-
       const apiKey = document.getElementById('ruxaApiKey').value.trim();
-      if (!apiKey) {
-        alert(lang === 'id' ? 'Masukkan API Key Ruxa.ai terlebih dahulu!' : 'Please enter your Ruxa.ai API Key first!');
-        return;
-      }
+      if (!apiKey) { alert(lang==='id'?'Masukkan API Key Ruxa.ai!':'Please enter your Ruxa.ai API Key!'); return; }
       localStorage.setItem('ruxa_api_key', apiKey);
-
       const size = document.getElementById('imageSize').value;
       const model = document.getElementById('imageModel').value;
-      const quality = document.getElementById('imageQuality').value;
       const count = parseInt(document.getElementById('imageCount').value);
       const style = document.getElementById('imageStyle').value;
       const negative = document.getElementById('imageNegative').value.trim();
       const [width, height] = size.split('x').map(Number);
-
-      // Append style to prompt if selected
       if (style) prompt = `${prompt}, ${style} style`;
-
       input.value = ''; autoResize(input);
       document.getElementById('sendBtn').disabled = true;
       isStreaming = true;
-
       appendMessage('user', `🎨 ${prompt}`);
       appendGenStatus(prompt, 'image');
-
       try {
         const body = { model, prompt, width, height, n: count };
-        if (quality === 'hd') body.quality = 'hd';
         if (negative) body.negative_prompt = negative;
-
         const res = await fetch('https://api.ruxa.ai/v1/images/generations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+          method: 'POST', headers: {'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
           body: JSON.stringify(body)
         });
-
         const bubble = document.getElementById('streamBubble');
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          bubble.innerHTML = `<span style="color:#ef4444">Error ${res.status}: ${escHtml(err.error?.message || err.message || 'Gagal generate gambar')}</span>`;
-          return;
-        }
-
+        if (!res.ok) { const err = await res.json().catch(()=>({})); bubble.innerHTML = `<span style="color:#ef4444">Error ${res.status}: ${escHtml(err.error?.message||err.message||'Gagal')}</span>`; return; }
         const data = await res.json();
         const images = data.data || [];
-
-        if (!images.length) {
-          bubble.innerHTML = `<span style="color:#ef4444">Tidak ada gambar yang dikembalikan dari API.</span>`;
-          return;
-        }
-
-        const imgHtmlArr = images.map(img => {
-          const url = img.url || img.b64_json;
-          const src = url.startsWith('http') ? url : `data:image/png;base64,${url}`;
-          return `<img src="${src}" alt="${escHtml(prompt)}" onclick="window.open(this.src,'_blank')" />`;
-        });
-
-        bubble.innerHTML = `
-          <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">✅ ${lang==='id'?'Gambar berhasil dibuat':'Image generated successfully'} (${images.length} ${lang==='id'?'gambar':'image'}${images.length>1?'s':''})</div>
-          <div class="${images.length > 1 ? 'gen-image-grid' : 'gen-image-wrap'}">${imgHtmlArr.join('')}</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">📝 ${escHtml(prompt)}</div>`;
+        if (!images.length) { bubble.innerHTML = `<span style="color:#ef4444">Tidak ada gambar dari API.</span>`; return; }
+        const imgArr = images.map(img => { const url = img.url||img.b64_json; const src = url.startsWith('http')?url:`data:image/png;base64,${url}`; return `<img src="${src}" onclick="window.open(this.src,'_blank')" />`; });
+        bubble.innerHTML = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">✅ ${images.length} gambar berhasil dibuat</div><div class="${images.length>1?'gen-image-grid':'gen-image-wrap'}">${imgArr.join('')}</div><div style="font-size:12px;color:var(--text-muted);margin-top:8px;">📝 ${escHtml(prompt)}</div>`;
         scrollBottom();
-
       } catch(e) {
         const bubble = document.getElementById('streamBubble');
-        if (bubble) bubble.innerHTML = `<span style="color:#ef4444">${lang==='id'?'Gagal menghubungi Ruxa.ai. Periksa API key dan koneksi.':'Failed to reach Ruxa.ai. Check your API key and connection.'}</span>`;
-      } finally {
-        document.getElementById('sendBtn').disabled = false;
-        isStreaming = false;
-      }
+        if (bubble) bubble.innerHTML = `<span style="color:#ef4444">Gagal menghubungi Ruxa.ai.</span>`;
+      } finally { document.getElementById('sendBtn').disabled = false; isStreaming = false; }
     }
 
-    // ─── Generate Video (Ruxa.ai) ─────────────────────────────────
     async function generateVideo() {
       if (isStreaming) return;
       const input = document.getElementById('msgInput');
       const prompt = input.value.trim();
       if (!prompt) return;
-
       const apiKey = document.getElementById('ruxaApiKey').value.trim();
-      if (!apiKey) {
-        alert(lang === 'id' ? 'Masukkan API Key Ruxa.ai terlebih dahulu!' : 'Please enter your Ruxa.ai API Key first!');
-        return;
-      }
+      if (!apiKey) { alert(lang==='id'?'Masukkan API Key Ruxa.ai!':'Please enter your Ruxa.ai API Key!'); return; }
       localStorage.setItem('ruxa_api_key', apiKey);
-
       const duration = parseInt(document.getElementById('videoDuration').value);
       const model = document.getElementById('videoModel').value;
       const resolution = document.getElementById('videoResolution').value;
       const aspect = document.getElementById('videoAspect').value;
-
       input.value = ''; autoResize(input);
       document.getElementById('sendBtn').disabled = true;
       isStreaming = true;
-
       appendMessage('user', `🎬 ${prompt}`);
       appendGenStatus(prompt, 'video');
-
       try {
         const res = await fetch('https://api.ruxa.ai/v1/videos/generations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+          method: 'POST', headers: {'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
           body: JSON.stringify({ model, prompt, duration, resolution, aspect_ratio: aspect })
         });
-
         const bubble = document.getElementById('streamBubble');
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          bubble.innerHTML = `<span style="color:#ef4444">Error ${res.status}: ${escHtml(err.error?.message || err.message || 'Gagal generate video')}</span>`;
-          document.getElementById('sendBtn').disabled = false;
-          isStreaming = false;
-          return;
-        }
-
+        if (!res.ok) { const err = await res.json().catch(()=>({})); bubble.innerHTML = `<span style="color:#ef4444">Error ${res.status}: ${escHtml(err.error?.message||err.message||'Gagal')}</span>`; document.getElementById('sendBtn').disabled=false; isStreaming=false; return; }
         const jobData = await res.json();
         const taskId = jobData.id || jobData.task_id;
-
         if (!taskId) {
           const videoUrl = jobData.data?.[0]?.url;
-          if (videoUrl) {
-            bubble.innerHTML = `
-              <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">✅ ${lang==='id'?'Video berhasil dibuat':'Video generated successfully'}</div>
-              <div class="gen-video-wrap"><video src="${videoUrl}" controls></video></div>
-              <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">📝 ${escHtml(prompt)}</div>`;
-            scrollBottom();
-          } else {
-            bubble.innerHTML = `<span style="color:#ef4444">Tidak ada task ID yang dikembalikan.</span>`;
-          }
-          document.getElementById('sendBtn').disabled = false;
-          isStreaming = false;
-          return;
+          if (videoUrl) { bubble.innerHTML = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">✅ Video berhasil dibuat</div><div class="gen-video-wrap"><video src="${videoUrl}" controls></video></div>`; scrollBottom(); }
+          else bubble.innerHTML = `<span style="color:#ef4444">Tidak ada task ID.</span>`;
+          document.getElementById('sendBtn').disabled=false; isStreaming=false; return;
         }
-
-        bubble.innerHTML = `<div class="gen-status"><div class="spinner"></div><span>${lang==='id'?'Memproses video... (ini mungkin memakan beberapa menit)':'Processing video... (this may take a few minutes)'}</span></div>`;
-        scrollBottom();
-
+        bubble.innerHTML = `<div class="gen-status"><div class="spinner"></div><span>Memproses video...</span></div>`;
         let attempts = 0;
-        const maxAttempts = 72; // 6 minutes
-
         const poll = async () => {
-          if (attempts >= maxAttempts) {
-            bubble.innerHTML = `<span style="color:#ef4444">${lang==='id'?'Timeout: video terlalu lama diproses':'Timeout: video took too long to process'}</span>`;
-            document.getElementById('sendBtn').disabled = false;
-            isStreaming = false;
-            return;
-          }
-          attempts++;
-
+          if (attempts++ >= 72) { bubble.innerHTML = `<span style="color:#ef4444">Timeout.</span>`; document.getElementById('sendBtn').disabled=false; isStreaming=false; return; }
           try {
-            const statusRes = await fetch(`https://api.ruxa.ai/v1/videos/generations/${taskId}`, {
-              headers: { 'Authorization': `Bearer ${apiKey}` }
-            });
-            const statusData = await statusRes.json();
-            const status = statusData.status;
-
-            if (status === 'completed' || status === 'succeeded') {
-              const videoUrl = statusData.output?.url || statusData.data?.[0]?.url || statusData.video_url;
-              if (videoUrl) {
-                bubble.innerHTML = `
-                  <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">✅ ${lang==='id'?'Video berhasil dibuat':'Video generated successfully'}</div>
-                  <div class="gen-video-wrap"><video src="${videoUrl}" controls></video></div>
-                  <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">📝 ${escHtml(prompt)}</div>`;
-                scrollBottom();
-              } else {
-                bubble.innerHTML = `<span style="color:#ef4444">Video selesai tapi URL tidak ditemukan.</span>`;
-              }
-              document.getElementById('sendBtn').disabled = false;
-              isStreaming = false;
-            } else if (status === 'failed' || status === 'error') {
-              bubble.innerHTML = `<span style="color:#ef4444">${lang==='id'?'Generate video gagal':'Video generation failed'}: ${escHtml(statusData.error || '')}</span>`;
-              document.getElementById('sendBtn').disabled = false;
-              isStreaming = false;
+            const sr = await fetch(`https://api.ruxa.ai/v1/videos/generations/${taskId}`, { headers: {'Authorization':`Bearer ${apiKey}`} });
+            const sd = await sr.json();
+            if (sd.status==='completed'||sd.status==='succeeded') {
+              const vurl = sd.output?.url||sd.data?.[0]?.url||sd.video_url;
+              if (vurl) { bubble.innerHTML = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">✅ Video berhasil dibuat</div><div class="gen-video-wrap"><video src="${vurl}" controls></video></div>`; scrollBottom(); }
+              else bubble.innerHTML = `<span style="color:#ef4444">Video selesai tapi URL tidak ditemukan.</span>`;
+              document.getElementById('sendBtn').disabled=false; isStreaming=false;
+            } else if (sd.status==='failed'||sd.status==='error') {
+              bubble.innerHTML = `<span style="color:#ef4444">Generate video gagal: ${escHtml(sd.error||'')}</span>`;
+              document.getElementById('sendBtn').disabled=false; isStreaming=false;
             } else {
-              const pct = statusData.progress ? ` (${Math.round(statusData.progress * 100)}%)` : '';
-              bubble.innerHTML = `<div class="gen-status"><div class="spinner"></div><span>${lang==='id'?'Memproses video':'Processing video'}${pct}...</span></div>`;
-              scrollBottom();
+              const pct = sd.progress ? ` (${Math.round(sd.progress*100)}%)` : '';
+              bubble.innerHTML = `<div class="gen-status"><div class="spinner"></div><span>Memproses video${pct}...</span></div>`;
               setTimeout(poll, 5000);
             }
-          } catch(pollErr) {
-            setTimeout(poll, 5000);
-          }
+          } catch(e) { setTimeout(poll, 5000); }
         };
-
         setTimeout(poll, 5000);
-
       } catch(e) {
         const bubble = document.getElementById('streamBubble');
-        if (bubble) bubble.innerHTML = `<span style="color:#ef4444">${lang==='id'?'Gagal menghubungi Ruxa.ai. Periksa API key dan koneksi.':'Failed to reach Ruxa.ai. Check your API key and connection.'}</span>`;
-        document.getElementById('sendBtn').disabled = false;
-        isStreaming = false;
+        if (bubble) bubble.innerHTML = `<span style="color:#ef4444">Gagal menghubungi Ruxa.ai.</span>`;
+        document.getElementById('sendBtn').disabled=false; isStreaming=false;
       }
     }
 
-    function sendChip(el) {
-      setMode('chat');
-      document.getElementById('msgInput').value = el.textContent.replace(/^[\S\s]{2}\s/, '');
-      sendMessage();
-    }
-
-    function handleKey(e) {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
-    }
-
-    function autoResize(el) {
-      el.style.height = 'auto';
-      el.style.height = Math.min(el.scrollHeight, 160) + 'px';
-    }
-
-    function escHtml(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+    function sendChip(el) { setMode('chat'); document.getElementById('msgInput').value = el.textContent.replace(/^[\S\s]{2}\s/, ''); sendMessage(); }
+    function handleKey(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); handleSend(); } }
+    function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,160)+'px'; }
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
     async function logout() {
-      if (confirm(lang === 'id' ? 'Yakin ingin keluar?' : 'Are you sure you want to log out?')) {
+      if (confirm(lang==='id'?'Yakin ingin keluar?':'Are you sure you want to log out?')) {
         await fetch('/api/logout', { method: 'POST' });
         location.href = '/';
       }
-    }
-
-    function openSidebar() {
-      document.getElementById('sidebar').classList.add('open');
-      document.getElementById('overlay').classList.add('show');
-    }
-    function closeSidebar() {
-      document.getElementById('sidebar').classList.remove('open');
-      document.getElementById('overlay').classList.remove('show');
     }
 
     marked.setOptions({ breaks: true, gfm: true });
