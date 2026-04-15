@@ -292,6 +292,78 @@ app.post("/api/feedback", requireAuth, (req, res) => {
   res.json({ success: true });
 });
 
+// ─── Admin Middleware ──────────────────────────────────────────────────────
+const requireAdmin = (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Login required" });
+  }
+  const adminEmail = process.env.ADMIN_EMAIL || "";
+  if (!adminEmail) {
+    return res.status(403).json({ error: "ADMIN_EMAIL not configured" });
+  }
+  if (req.user.email !== adminEmail) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  next();
+};
+
+// ─── Admin: Halaman ────────────────────────────────────────────────────────
+app.get("/admin", requireAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
+});
+
+// ─── Admin: Semua Feedback ─────────────────────────────────────────────────
+app.get("/api/admin/feedback", requireAdmin, (req, res) => {
+  const rows = db.prepare(`
+    SELECT f.id, f.type, f.message, f.created_at,
+           u.name as user_name, u.email as user_email, u.avatar as user_avatar
+    FROM feedback f
+    LEFT JOIN users u ON f.user_id = u.id
+    ORDER BY f.created_at DESC
+    LIMIT 200
+  `).all();
+  res.json(rows);
+});
+
+// ─── Admin: Semua Activity Log ─────────────────────────────────────────────
+app.get("/api/admin/activity", requireAdmin, (req, res) => {
+  const rows = db.prepare(`
+    SELECT a.action, a.detail, a.ip_address, a.device, a.created_at,
+           u.name as user_name, u.email as user_email
+    FROM activity_log a
+    LEFT JOIN users u ON a.user_id = u.id
+    ORDER BY a.created_at DESC
+    LIMIT 300
+  `).all();
+  res.json(rows);
+});
+
+// ─── Admin: Semua User ─────────────────────────────────────────────────────
+app.get("/api/admin/users", requireAdmin, (req, res) => {
+  const rows = db.prepare(`
+    SELECT u.id, u.name, u.email, u.avatar, u.plan, u.created_at,
+           COUNT(DISTINCT c.id) as conv_count,
+           COUNT(DISTINCT m.id) as msg_count
+    FROM users u
+    LEFT JOIN conversations c ON c.user_id = u.id
+    LEFT JOIN messages m ON m.conversation_id = c.id
+    GROUP BY u.id
+    ORDER BY u.created_at DESC
+  `).all();
+  res.json(rows);
+});
+
+// ─── Admin: Stats ──────────────────────────────────────────────────────────
+app.get("/api/admin/stats", requireAdmin, (req, res) => {
+  const totalUsers   = db.prepare("SELECT COUNT(*) as n FROM users").get().n;
+  const totalConvs   = db.prepare("SELECT COUNT(*) as n FROM conversations").get().n;
+  const totalMsgs    = db.prepare("SELECT COUNT(*) as n FROM messages").get().n;
+  const totalFeedback= db.prepare("SELECT COUNT(*) as n FROM feedback").get().n;
+  const today = new Date().toISOString().slice(0, 10);
+  const newToday = db.prepare("SELECT COUNT(*) as n FROM users WHERE created_at >= ?").get(today + "T00:00:00").n;
+  res.json({ totalUsers, totalConvs, totalMsgs, totalFeedback, newToday });
+});
+
 // ─── Chat (Streaming) ──────────────────────────────────────────────────────
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
