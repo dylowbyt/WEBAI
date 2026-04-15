@@ -258,7 +258,7 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/?error=spam_blocked", failureMessage: true }),
   (req, res) => {
-    const target = req.session.returnTo || "/chat.html";
+    const target = req.session.returnTo || "/chat";
     delete req.session.returnTo;
     res.redirect(target);
   }
@@ -269,6 +269,8 @@ app.post("/api/logout", (req, res) => {
     res.json({ success: true });
   });
 });
+app.get("/chat.html", (req, res) => res.redirect(301, "/chat"));
+app.get("/chat", requireAuth, (req, res) => res.sendFile(path.join(__dirname, "public", "chat.html")));
 app.get("/admin.html", requireAdmin, (req, res) => res.redirect("/admin"));
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/api/user", requireAuth, (req, res) => {
@@ -373,9 +375,10 @@ app.get("/api/admin/stats", requireAdmin, (req, res) => {
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.post("/api/chat", requireAuth, async (req, res) => {
-  const { conversationId, message, language = "id" } = req.body;
-  if (!message || !conversationId)
-    return res.status(400).json({ error: "Missing fields" });
+  const { conversationId, message, language = "id", imageData, imageDataList } = req.body;
+  const images = Array.isArray(imageDataList) && imageDataList.length ? imageDataList : (imageData ? [imageData] : []);
+  if (!message && !images.length) return res.status(400).json({ error: "Missing fields" });
+  if (!conversationId) return res.status(400).json({ error: "Missing fields" });
 
   const conv = db
     .prepare("SELECT * FROM conversations WHERE id = ? AND user_id = ?")
@@ -397,19 +400,25 @@ app.post("/api/chat", requireAuth, async (req, res) => {
     }
   }
 
-  // Save user message
+  // Save user message (gambar disimpan sebagai label teks)
+  const savedContent = images.length
+    ? (message ? `[Gambar] ${message}` : "[Gambar]")
+    : message;
   db.prepare("INSERT INTO messages (id, conversation_id, role, content) VALUES (?, ?, ?, ?)")
-    .run(randomUUID(), conversationId, "user", message);
+    .run(randomUUID(), conversationId, "user", savedContent);
 
   // Auto-title
+  const titleText = message || "[Gambar]";
   if (conv.title === "Chat Baru" || conv.title === "New Chat") {
-    const title = message.length > 45 ? message.substring(0, 45) + "…" : message;
+    const title = titleText.length > 45 ? titleText.substring(0, 45) + "…" : titleText;
     db.prepare("UPDATE conversations SET title = ? WHERE id = ?").run(title, conversationId);
   }
 
-  const history = db
+  // History (tanpa pesan terakhir — akan dibangun dengan vision jika ada gambar)
+  const allHistory = db
     .prepare("SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC")
     .all(conversationId);
+  const history = allHistory.slice(0, -1); // lepas pesan terakhir yg baru disimpan
 
   const systemPrompt = language === "id"
     ? "Kamu adalah XYA AI, asisten AI yang cerdas, ramah, dan membantu. Jawab semua pertanyaan dengan bahasa Indonesia yang natural, informatif, dan mudah dipahami. Gunakan formatting markdown bila perlu."
@@ -422,6 +431,17 @@ app.post("/api/chat", requireAuth, async (req, res) => {
   try {
     let fullResponse = "";
 
+    // Bangun pesan terakhir user — pakai vision jika ada gambar
+    let lastUserMsg;
+    const validImgs = images.filter(d => typeof d === "string" && d.startsWith("data:image/"));
+    if (validImgs.length > 0) {
+      const content = validImgs.map(d => ({ type: "image_url", image_url: { url: d, detail: "auto" } }));
+      content.push({ type: "text", text: message || (language === "id" ? "Apa yang ada di gambar-gambar ini?" : "What is in these images?") });
+      lastUserMsg = { role: "user", content };
+    } else {
+      lastUserMsg = { role: "user", content: message };
+    }
+
     const stream = await openai.chat.completions.create({
       model: "gpt-4o",
       max_tokens: 2048,
@@ -431,7 +451,8 @@ app.post("/api/chat", requireAuth, async (req, res) => {
         ...history.map(m => ({
           role: m.role === "assistant" ? "assistant" : "user",
           content: m.content
-        }))
+        })),
+        lastUserMsg,
       ],
     });
 
@@ -473,6 +494,35 @@ app.get("/", (req, res, next) => {
     <a href="/">← Kembali</a></div></body></html>`);
   }
   next();
+});
+
+// ─── Generate Image via DALL-E 3 (khusus mode chat) ─────────────────────
+app.post("/api/generate-image", requireAuth, async (req, res) => {
+  const { prompt, size = "1024x1024", quality = "standard", style = "vivid" } = req.body;
+  if (!prompt) return res.status(400).json({ error: "Prompt diperlukan" });
+  try {
+    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt,
+      n: 1,
+      size,
+      quality,
+      style,
+    });
+    const url = response.data[0]?.url;
+    const revised = response.data[0]?.revised_prompt;
+    if (!url) return res.status(500).json({ error: "Gagal generate gambar" });
+    res.json({ url, revised_prompt: revised });
+  } catch (err) {
+    console.error("DALL-E error:", err.message);
+    res.status(500).json({ error: err?.error?.message || "Gagal generate gambar." });
+  }
+});
+
+// ─── 404 Handler ─────────────────────────────────────────────────────────
+app.use((req, res) => {
+  if (wantsHtml(req)) return res.status(404).sendFile(path.join(__dirname, "public", "404.html"));
+  res.status(404).json({ error: "Not found" });
 });
 
 app.listen(PORT, () =>
