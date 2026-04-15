@@ -3,7 +3,7 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const session = require("express-session");
 const Database = require("better-sqlite3");
-const Anthropic = require("@anthropic-ai/sdk");
+const OpenAI = require("openai");
 const { randomUUID, createHash } = require("crypto");
 const path = require("path");
 
@@ -93,30 +93,36 @@ function logActivity(userId, action, detail, req) {
   } catch (e) {}
 }
 
+// ─── Daily message limit ───────────────────────────────────────────────────
+const PLAN_LIMITS = { free: 10, basic: 100, pro: Infinity, max: Infinity };
+
+function getDailyMessageCount(userId) {
+  const today = new Date().toISOString().slice(0, 10);
+  const row = db.prepare(
+    `SELECT COUNT(*) as cnt FROM messages
+     WHERE conversation_id IN (SELECT id FROM conversations WHERE user_id = ?)
+     AND role = 'user' AND created_at >= ?`
+  ).get(userId, today + "T00:00:00");
+  return row.cnt;
+}
+
 // ─── Anti-Spam Guard ───────────────────────────────────────────────────────
 function checkRegistrationSpam(req, googleId) {
   const ip = getClientIP(req);
   const dHash = deviceHash(req);
-  const windowMs = 24 * 60 * 60 * 1000; // 24 hours
+  const windowMs = 24 * 60 * 60 * 1000;
   const cutoff = new Date(Date.now() - windowMs).toISOString();
 
-  // Max 3 new accounts per IP per 24h
   const ipCount = db
-    .prepare(
-      "SELECT COUNT(*) as cnt FROM registration_guard WHERE ip_address = ? AND created_at > ?"
-    )
+    .prepare("SELECT COUNT(*) as cnt FROM registration_guard WHERE ip_address = ? AND created_at > ?")
     .get(ip, cutoff);
   if (ipCount.cnt >= 3) return { blocked: true, reason: "too_many_accounts_ip" };
 
-  // Max 2 new accounts per device per 24h
   const devCount = db
-    .prepare(
-      "SELECT COUNT(*) as cnt FROM registration_guard WHERE device_hash = ? AND created_at > ?"
-    )
+    .prepare("SELECT COUNT(*) as cnt FROM registration_guard WHERE device_hash = ? AND created_at > ?")
     .get(dHash, cutoff);
   if (devCount.cnt >= 2) return { blocked: true, reason: "too_many_accounts_device" };
 
-  // Record this registration attempt
   db.prepare(
     "INSERT INTO registration_guard (id, ip_address, device_hash, google_id) VALUES (?, ?, ?, ?)"
   ).run(randomUUID(), ip, dHash, googleId);
@@ -134,18 +140,15 @@ passport.use(
       passReqToCallback: true,
     },
     (req, accessToken, refreshToken, profile, done) => {
-      // Check if user already exists
       const existing = db
         .prepare("SELECT * FROM users WHERE google_id = ?")
         .get(profile.id);
 
       if (existing) {
-        // Existing user — just log activity
         logActivity(existing.id, "login", "Google OAuth login", req);
         return done(null, existing);
       }
 
-      // NEW user — check anti-spam
       const guard = checkRegistrationSpam(req, profile.id);
       if (guard.blocked) {
         return done(null, false, {
@@ -156,17 +159,10 @@ passport.use(
         });
       }
 
-      // Create new user
       const id = randomUUID();
       db.prepare(
         "INSERT INTO users (id, google_id, name, email, avatar) VALUES (?, ?, ?, ?, ?)"
-      ).run(
-        id,
-        profile.id,
-        profile.displayName,
-        profile.emails?.[0]?.value || "",
-        profile.photos?.[0]?.value || ""
-      );
+      ).run(id, profile.id, profile.displayName, profile.emails?.[0]?.value || "", profile.photos?.[0]?.value || "");
 
       const user = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
       logActivity(id, "register", "Akun baru dibuat via Google", req);
@@ -205,16 +201,10 @@ const requireAuth = (req, res, next) => {
 };
 
 // ─── Auth Routes ───────────────────────────────────────────────────────────
-app.get(
-  "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
+app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: "/?error=spam_blocked",
-    failureMessage: true,
-  }),
+  passport.authenticate("google", { failureRedirect: "/?error=spam_blocked", failureMessage: true }),
   (req, res) => res.redirect("/chat.html")
 );
 app.post("/api/logout", (req, res) => {
@@ -222,15 +212,21 @@ app.post("/api/logout", (req, res) => {
 });
 app.get("/api/user", requireAuth, (req, res) => {
   const { id, name, email, avatar, plan, created_at } = req.user;
-  res.json({ id, name, email, avatar, plan: plan || "free", created_at });
+  const limit = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  const used = getDailyMessageCount(id);
+  const remaining = limit === Infinity ? null : Math.max(0, limit - used);
+  res.json({
+    id, name, email, avatar, plan: plan || "free", created_at,
+    dailyLimit: limit === Infinity ? null : limit,
+    dailyUsed: used,
+    dailyRemaining: remaining
+  });
 });
 
 // ─── Conversation Routes ───────────────────────────────────────────────────
 app.get("/api/conversations", requireAuth, (req, res) => {
   const convs = db
-    .prepare(
-      "SELECT * FROM conversations WHERE user_id = ? ORDER BY updated_at DESC"
-    )
+    .prepare("SELECT * FROM conversations WHERE user_id = ? ORDER BY updated_at DESC")
     .all(req.user.id);
   res.json(convs);
 });
@@ -239,9 +235,8 @@ app.post("/api/conversations", requireAuth, (req, res) => {
   const id = randomUUID();
   const { language = "id" } = req.body;
   const title = language === "id" ? "Chat Baru" : "New Chat";
-  db.prepare(
-    "INSERT INTO conversations (id, user_id, title, language) VALUES (?, ?, ?, ?)"
-  ).run(id, req.user.id, title, language);
+  db.prepare("INSERT INTO conversations (id, user_id, title, language) VALUES (?, ?, ?, ?)")
+    .run(id, req.user.id, title, language);
   logActivity(req.user.id, "new_conversation", `Percakapan baru: ${title}`, req);
   res.json({ id, title, language, messages: [] });
 });
@@ -252,9 +247,7 @@ app.get("/api/conversations/:id", requireAuth, (req, res) => {
     .get(req.params.id, req.user.id);
   if (!conv) return res.status(404).json({ error: "Not found" });
   const messages = db
-    .prepare(
-      "SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC"
-    )
+    .prepare("SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC")
     .all(req.params.id);
   res.json({ ...conv, messages });
 });
@@ -273,9 +266,7 @@ app.delete("/api/conversations/:id", requireAuth, (req, res) => {
 // ─── Activity Log ──────────────────────────────────────────────────────────
 app.get("/api/activity", requireAuth, (req, res) => {
   const logs = db
-    .prepare(
-      "SELECT action, detail, ip_address, device, created_at FROM activity_log WHERE user_id = ? ORDER BY created_at DESC LIMIT 50"
-    )
+    .prepare("SELECT action, detail, ip_address, device, created_at FROM activity_log WHERE user_id = ? ORDER BY created_at DESC LIMIT 50")
     .all(req.user.id);
   res.json(logs);
 });
@@ -285,87 +276,43 @@ app.post("/api/feedback", requireAuth, (req, res) => {
   const { type = "general", message } = req.body;
   if (!message || message.trim().length < 5)
     return res.status(400).json({ error: "Pesan terlalu pendek" });
-  db.prepare(
-    "INSERT INTO feedback (id, user_id, type, message) VALUES (?, ?, ?, ?)"
-  ).run(randomUUID(), req.user.id, type, message.trim());
+  db.prepare("INSERT INTO feedback (id, user_id, type, message) VALUES (?, ?, ?, ?)")
+    .run(randomUUID(), req.user.id, type, message.trim());
   logActivity(req.user.id, "feedback", `Masukan: ${type}`, req);
   res.json({ success: true });
 });
 
-// ─── Admin Middleware ──────────────────────────────────────────────────────
+// ─── Admin ──────────────────────────────────────────────────────────────────
 const requireAdmin = (req, res, next) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: "Login required" });
-  }
+  if (!req.isAuthenticated()) return res.status(401).json({ error: "Login required" });
   const adminEmail = process.env.ADMIN_EMAIL || "";
-  if (!adminEmail) {
-    return res.status(403).json({ error: "ADMIN_EMAIL not configured" });
-  }
-  if (req.user.email !== adminEmail) {
-    return res.status(403).json({ error: "Access denied" });
-  }
+  if (!adminEmail) return res.status(403).json({ error: "ADMIN_EMAIL not configured" });
+  if (req.user.email !== adminEmail) return res.status(403).json({ error: "Access denied" });
   next();
 };
-
-// ─── Admin: Halaman ────────────────────────────────────────────────────────
-app.get("/admin", requireAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "admin.html"));
-});
-
-// ─── Admin: Semua Feedback ─────────────────────────────────────────────────
+app.get("/admin", requireAdmin, (req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
 app.get("/api/admin/feedback", requireAdmin, (req, res) => {
-  const rows = db.prepare(`
-    SELECT f.id, f.type, f.message, f.created_at,
-           u.name as user_name, u.email as user_email, u.avatar as user_avatar
-    FROM feedback f
-    LEFT JOIN users u ON f.user_id = u.id
-    ORDER BY f.created_at DESC
-    LIMIT 200
-  `).all();
-  res.json(rows);
+  res.json(db.prepare(`SELECT f.id, f.type, f.message, f.created_at, u.name as user_name, u.email as user_email, u.avatar as user_avatar FROM feedback f LEFT JOIN users u ON f.user_id = u.id ORDER BY f.created_at DESC LIMIT 200`).all());
 });
-
-// ─── Admin: Semua Activity Log ─────────────────────────────────────────────
 app.get("/api/admin/activity", requireAdmin, (req, res) => {
-  const rows = db.prepare(`
-    SELECT a.action, a.detail, a.ip_address, a.device, a.created_at,
-           u.name as user_name, u.email as user_email
-    FROM activity_log a
-    LEFT JOIN users u ON a.user_id = u.id
-    ORDER BY a.created_at DESC
-    LIMIT 300
-  `).all();
-  res.json(rows);
+  res.json(db.prepare(`SELECT a.action, a.detail, a.ip_address, a.device, a.created_at, u.name as user_name, u.email as user_email FROM activity_log a LEFT JOIN users u ON a.user_id = u.id ORDER BY a.created_at DESC LIMIT 300`).all());
 });
-
-// ─── Admin: Semua User ─────────────────────────────────────────────────────
 app.get("/api/admin/users", requireAdmin, (req, res) => {
-  const rows = db.prepare(`
-    SELECT u.id, u.name, u.email, u.avatar, u.plan, u.created_at,
-           COUNT(DISTINCT c.id) as conv_count,
-           COUNT(DISTINCT m.id) as msg_count
-    FROM users u
-    LEFT JOIN conversations c ON c.user_id = u.id
-    LEFT JOIN messages m ON m.conversation_id = c.id
-    GROUP BY u.id
-    ORDER BY u.created_at DESC
-  `).all();
-  res.json(rows);
+  res.json(db.prepare(`SELECT u.id, u.name, u.email, u.avatar, u.plan, u.created_at, COUNT(DISTINCT c.id) as conv_count, COUNT(DISTINCT m.id) as msg_count FROM users u LEFT JOIN conversations c ON c.user_id = u.id LEFT JOIN messages m ON m.conversation_id = c.id GROUP BY u.id ORDER BY u.created_at DESC`).all());
 });
-
-// ─── Admin: Stats ──────────────────────────────────────────────────────────
 app.get("/api/admin/stats", requireAdmin, (req, res) => {
-  const totalUsers   = db.prepare("SELECT COUNT(*) as n FROM users").get().n;
-  const totalConvs   = db.prepare("SELECT COUNT(*) as n FROM conversations").get().n;
-  const totalMsgs    = db.prepare("SELECT COUNT(*) as n FROM messages").get().n;
-  const totalFeedback= db.prepare("SELECT COUNT(*) as n FROM feedback").get().n;
   const today = new Date().toISOString().slice(0, 10);
-  const newToday = db.prepare("SELECT COUNT(*) as n FROM users WHERE created_at >= ?").get(today + "T00:00:00").n;
-  res.json({ totalUsers, totalConvs, totalMsgs, totalFeedback, newToday });
+  res.json({
+    totalUsers: db.prepare("SELECT COUNT(*) as n FROM users").get().n,
+    totalConvs: db.prepare("SELECT COUNT(*) as n FROM conversations").get().n,
+    totalMsgs: db.prepare("SELECT COUNT(*) as n FROM messages").get().n,
+    totalFeedback: db.prepare("SELECT COUNT(*) as n FROM feedback").get().n,
+    newToday: db.prepare("SELECT COUNT(*) as n FROM users WHERE created_at >= ?").get(today + "T00:00:00").n,
+  });
 });
 
-// ─── Chat (Streaming) ──────────────────────────────────────────────────────
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// ─── Chat (Streaming via OpenAI) ─────────────────────────────────────────
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.post("/api/chat", requireAuth, async (req, res) => {
   const { conversationId, message, language = "id" } = req.body;
@@ -377,27 +324,38 @@ app.post("/api/chat", requireAuth, async (req, res) => {
     .get(conversationId, req.user.id);
   if (!conv) return res.status(404).json({ error: "Conversation not found" });
 
-  db.prepare(
-    "INSERT INTO messages (id, conversation_id, role, content) VALUES (?, ?, ?, ?)"
-  ).run(randomUUID(), conversationId, "user", message);
+  // ── Daily limit check ──
+  const plan = req.user.plan || "free";
+  const limit = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  if (limit !== Infinity) {
+    const used = getDailyMessageCount(req.user.id);
+    if (used >= limit) {
+      return res.status(429).json({
+        error: language === "id"
+          ? `Kamu sudah mencapai batas ${limit} pesan hari ini. Upgrade ke Pro untuk chat tanpa batas! 🚀`
+          : `You've reached your daily limit of ${limit} messages. Upgrade to Pro for unlimited chat! 🚀`,
+        limitReached: true,
+      });
+    }
+  }
 
+  // Save user message
+  db.prepare("INSERT INTO messages (id, conversation_id, role, content) VALUES (?, ?, ?, ?)")
+    .run(randomUUID(), conversationId, "user", message);
+
+  // Auto-title
   if (conv.title === "Chat Baru" || conv.title === "New Chat") {
     const title = message.length > 45 ? message.substring(0, 45) + "…" : message;
-    db.prepare("UPDATE conversations SET title = ? WHERE id = ?").run(
-      title, conversationId
-    );
+    db.prepare("UPDATE conversations SET title = ? WHERE id = ?").run(title, conversationId);
   }
 
   const history = db
-    .prepare(
-      "SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC"
-    )
+    .prepare("SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC")
     .all(conversationId);
 
-  const systemPrompt =
-    language === "id"
-      ? "Kamu adalah XYA AI, asisten AI yang cerdas, ramah, dan membantu. Jawab semua pertanyaan dengan bahasa Indonesia yang natural, informatif, dan mudah dipahami. Gunakan formatting markdown bila perlu."
-      : "You are XYA AI, a smart, friendly, and helpful AI assistant. Answer all questions in natural, informative, and easy-to-understand English. Use markdown formatting when appropriate.";
+  const systemPrompt = language === "id"
+    ? "Kamu adalah XYA AI, asisten AI yang cerdas, ramah, dan membantu. Jawab semua pertanyaan dengan bahasa Indonesia yang natural, informatif, dan mudah dipahami. Gunakan formatting markdown bila perlu."
+    : "You are XYA AI, a smart, friendly, and helpful AI assistant. Answer all questions in natural, informative, and easy-to-understand English. Use markdown formatting when appropriate.";
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -405,41 +363,46 @@ app.post("/api/chat", requireAuth, async (req, res) => {
 
   try {
     let fullResponse = "";
-    const stream = anthropic.messages.stream({
-      model: "claude-sonnet-4-20250514",
+
+    const stream = await openai.chat.completions.create({
+      model: "gpt-4o",
       max_tokens: 2048,
-      system: systemPrompt,
-      messages: history,
+      stream: true,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...history.map(m => ({
+          role: m.role === "assistant" ? "assistant" : "user",
+          content: m.content
+        }))
+      ],
     });
 
-    stream.on("text", (text) => {
-      fullResponse += text;
-      res.write(`data: ${JSON.stringify({ text })}\n\n`);
-    });
+    for await (const chunk of stream) {
+      const text = chunk.choices[0]?.delta?.content || "";
+      if (text) {
+        fullResponse += text;
+        res.write(`data: ${JSON.stringify({ text })}\n\n`);
+      }
+    }
 
-    stream.on("finalMessage", () => {
-      db.prepare(
-        "INSERT INTO messages (id, conversation_id, role, content) VALUES (?, ?, ?, ?)"
-      ).run(randomUUID(), conversationId, "assistant", fullResponse);
-      db.prepare(
-        "UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?"
-      ).run(conversationId);
-      logActivity(req.user.id, "chat", `Pesan dikirim di: ${conv.title || conversationId}`, req);
-      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-      res.end();
-    });
+    // Save assistant reply
+    db.prepare("INSERT INTO messages (id, conversation_id, role, content) VALUES (?, ?, ?, ?)")
+      .run(randomUUID(), conversationId, "assistant", fullResponse);
+    db.prepare("UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+      .run(conversationId);
+    logActivity(req.user.id, "chat", `Pesan dikirim di: ${conv.title || conversationId}`, req);
+    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+    res.end();
 
-    stream.on("error", (err) => {
-      res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
-      res.end();
-    });
   } catch (err) {
-    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    console.error("OpenAI error:", err.message);
+    // Never expose raw API errors to frontend
+    res.write(`data: ${JSON.stringify({ error: "internal" })}\n\n`);
     res.end();
   }
 });
 
-// ─── Spam blocked page ─────────────────────────────────────────────────────
+// ─── Spam blocked page ────────────────────────────────────────────────────
 app.get("/", (req, res, next) => {
   if (req.query.error === "spam_blocked") {
     return res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>XYA AI</title>
