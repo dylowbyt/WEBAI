@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XYA AI — Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #4f46e5; --primary-dark: #3730a3; --primary-light: #eef2ff;
+      --text: #0f172a; --text-muted: #64748b; --border: #e2e8f0;
+      --bg: #f8faff; --card: #ffffff;
+    }
+    body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ─── TOP BAR ─── */
+    .topbar {
+      background: white; border-bottom: 1px solid var(--border);
+      padding: 0 28px; height: 58px; display: flex; align-items: center;
+      gap: 12px; position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+    }
+    .topbar-logo { display: flex; align-items: center; gap: 9px; }
+    .logo-mark {
+      width: 34px; height: 34px; border-radius: 9px; overflow: hidden;
+      box-shadow: 0 2px 8px rgba(79,70,229,0.2);
+    }
+    .logo-mark img { width: 100%; height: 100%; object-fit: cover; }
+    .logo-wordmark { font-size: 15px; font-weight: 800; letter-spacing: -0.4px; }
+    .logo-wordmark span { color: var(--primary); }
+    .admin-badge {
+      background: var(--primary-light); color: var(--primary); font-size: 10px;
+      font-weight: 800; padding: 3px 9px; border-radius: 100px; letter-spacing: 0.5px;
+    }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .admin-email { font-size: 12px; color: var(--text-muted); }
+    .topbar-logout {
+      padding: 7px 14px; border-radius: 9px; border: 1px solid var(--border);
+      background: white; color: var(--text-muted); font-family: 'Sora', sans-serif;
+      font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .topbar-logout:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+
+    /* ─── WRAPPER ─── */
+    .wrapper { max-width: 1180px; margin: 0 auto; padding: 28px 24px; }
+
+    /* ─── STAT CARDS ─── */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 20px 20px 16px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .stat-icon { font-size: 22px; margin-bottom: 4px; }
+    .stat-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; color: var(--primary); }
+    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+    /* ─── TABS ─── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: white; border: 1px solid var(--border); border-radius: 12px; padding: 4px; width: fit-content; }
+    .tab {
+      padding: 8px 18px; border-radius: 9px; border: none; background: none;
+      font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600;
+      color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+    }
+    .tab:hover { color: var(--primary); }
+    .tab.active { background: var(--primary); color: white; }
+
+    /* ─── PANELS ─── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ─── TABLE CARD ─── */
+    .table-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      overflow: hidden;
+    }
+    .table-head {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .table-head h3 { font-size: 15px; font-weight: 700; }
+    .count-badge {
+      background: var(--primary-light); color: var(--primary);
+      font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 100px;
+    }
+    .refresh-btn {
+      margin-left: auto; padding: 6px 14px; border-radius: 8px;
+      border: 1px solid var(--border); background: white; color: var(--text-muted);
+      font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .refresh-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; padding: 11px 16px; font-size: 11px; font-weight: 700;
+      color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;
+      background: var(--bg); border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    td {
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+      font-size: 13px; vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg); }
+    .empty-state { text-align: center; padding: 48px; color: var(--text-muted); font-size: 13px; }
+    .loading { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
+
+    /* Type badge */
+    .type-badge {
+      display: inline-flex; align-items: center; padding: 3px 10px;
+      border-radius: 100px; font-size: 11px; font-weight: 700; white-space: nowrap;
+    }
+    .type-bug { background: #fee2e2; color: #dc2626; }
+    .type-feature { background: #fffbeb; color: #d97706; }
+    .type-ux { background: #f0fdf4; color: #16a34a; }
+    .type-general { background: var(--primary-light); color: var(--primary); }
+    .type-login { background: #f0fdf4; color: #16a34a; }
+    .type-register { background: #eff6ff; color: #3b82f6; }
+    .type-chat { background: var(--primary-light); color: var(--primary); }
+    .type-new_conversation { background: #fdf4ff; color: #9333ea; }
+    .type-delete_conversation { background: #fee2e2; color: #dc2626; }
+    .type-feedback { background: #fffbeb; color: #d97706; }
+
+    /* User row */
+    .user-cell { display: flex; align-items: center; gap: 10px; }
+    .user-av {
+      width: 30px; height: 30px; border-radius: 50%; overflow: hidden;
+      background: var(--primary-light); display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; font-size: 13px;
+    }
+    .user-av img { width: 100%; height: 100%; object-fit: cover; }
+    .user-name { font-weight: 600; font-size: 13px; }
+    .user-email { font-size: 11px; color: var(--text-muted); }
+    .plan-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; background: var(--primary-light); color: var(--primary); }
+    .ip-text { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+    .dev-text { font-size: 11px; color: #94a3b8; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .msg-cell { max-width: 340px; font-size: 13px; line-height: 1.5; word-break: break-word; }
+    .time-text { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+    /* Search */
+    .search-bar {
+      display: flex; align-items: center; gap: 8px; background: var(--bg);
+      border: 1.5px solid var(--border); border-radius: 100px; padding: 7px 14px;
+      transition: border-color 0.2s; max-width: 280px;
+    }
+    .search-bar:focus-within { border-color: var(--primary); }
+    .search-bar svg { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+    .search-bar input { flex: 1; border: none; outline: none; font-family: 'Sora', sans-serif; font-size: 13px; color: var(--text); background: none; }
+    .search-bar input::placeholder { color: #94a3b8; }
+
+    @media (max-width: 640px) {
+      .wrapper { padding: 16px 12px; }
+      .tabs { width: 100%; }
+      .tab { flex: 1; text-align: center; padding: 8px 10px; font-size: 12px; }
+      .topbar { padding: 0 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-mark"><img src="/logo.png" alt="XYA AI" /></div>
+      <span class="logo-wordmark">XYA <span>AI</span></span>
+      <span class="admin-badge">ADMIN</span>
+    </div>
+    <div class="topbar-right">
+      <span class="admin-email" id="adminEmail"></span>
+      <button class="topbar-logout" onclick="logout()">Keluar</button>
+    </div>
+  </header>
+
+  <div class="wrapper">
+
+    <!-- STATS -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><div class="stat-icon">👤</div><div class="stat-val" id="s-users">—</div><div class="stat-label">Total Pengguna</div></div>
+      <div class="stat-card"><div class="stat-icon">🆕</div><div class="stat-val" id="s-new">—</div><div class="stat-label">Daftar Hari Ini</div></div>
+      <div class="stat-card"><div class="stat-icon">💬</div><div class="stat-val" id="s-convs">—</div><div class="stat-label">Total Percakapan</div></div>
+      <div class="stat-card"><div class="stat-icon">📨</div><div class="stat-val" id="s-msgs">—</div><div class="stat-label">Total Pesan</div></div>
+      <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-val" id="s-feedback">—</div><div class="stat-label">Total Masukan</div></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('feedback')">📝 Masukan</button>
+      <button class="tab" onclick="switchTab('activity')">📋 Log Aktivitas</button>
+      <button class="tab" onclick="switchTab('users')">👥 Pengguna</button>
+    </div>
+
+    <!-- ─── PANEL: MASUKAN ─── -->
+    <div class="panel active" id="panel-feedback">
+      <div class="table-card">
+        <div class="table-head">
+          <h3>📝 Semua Masukan</h3>
+          <span class="count-badge" id="fb-count">—</span>
+          <div class="search-bar" style="margin-left:12px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="fbSearch" placeholder="Cari masukan..." oninput="filterFeedback(this.value)" />
+          </div>
+          <button class="refresh-btn" onclick="loadFeedback()">↻ Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table id="fbTable">
+            <thead>
+              <tr>
+                <th>Pengguna</th>
+                <th>Jenis</th>
+                <th>Pesan</th>
+                <th>Waktu</th>
+              </tr>
+            </thead>
+            <tbody id="fbBody"><tr><td colspan="4" class="loading">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PANEL: LOG AKTIVITAS ─── -->
+    <div class="panel" id="panel-activity">
+      <div class="table-card">
+        <div class="table-head">
+          <h3>📋 Log Aktivitas</h3>
+          <span class="count-badge" id="act-count">—</span>
+          <div class="search-bar" style="margin-left:12px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="actSearch" placeholder="Cari log..." oninput="filterActivity(this.value)" />
+          </div>
+          <button class="refresh-btn" onclick="loadActivity()">↻ Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table id="actTable">
+            <thead>
+              <tr>
+                <th>Pengguna</th>
+                <th>Aksi</th>
+                <th>Detail</th>
+                <th>IP</th>
+                <th>Perangkat</th>
+                <th>Waktu</th>
+              </tr>
+            </thead>
+            <tbody id="actBody"><tr><td colspan="6" class="loading">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PANEL: PENGGUNA ─── -->
+    <div class="panel" id="panel-users">
+      <div class="table-card">
+        <div class="table-head">
+          <h3>👥 Semua Pengguna</h3>
+          <span class="count-badge" id="usr-count">—</span>
+          <div class="search-bar" style="margin-left:12px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="usrSearch" placeholder="Cari pengguna..." oninput="filterUsers(this.value)" />
+          </div>
+          <button class="refresh-btn" onclick="loadUsers()">↻ Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table id="usrTable">
+            <thead>
+              <tr>
+                <th>Pengguna</th>
+                <th>Paket</th>
+                <th>Percakapan</th>
+                <th>Pesan</th>
+                <th>Daftar</th>
+              </tr>
+            </thead>
+            <tbody id="usrBody"><tr><td colspan="5" class="loading">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let allFeedback = [], allActivity = [], allUsers = [];
+
+    const typeLabel = {
+      bug: '🐛 Bug', feature: '💡 Fitur', ux: '🎨 UX', general: '💬 Umum',
+    };
+    const actionLabel = {
+      login: '🔑 Masuk', register: '🆕 Daftar',
+      new_conversation: '💬 Chat Baru', delete_conversation: '🗑️ Hapus Chat',
+      chat: '📨 Pesan', feedback: '📝 Masukan',
+    };
+    const typeCls = {
+      bug:'type-bug', feature:'type-feature', ux:'type-ux', general:'type-general',
+      login:'type-login', register:'type-register', chat:'type-chat',
+      new_conversation:'type-new_conversation', delete_conversation:'type-delete_conversation',
+      feedback:'type-feedback',
+    };
+
+    function fmtTime(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return d.toLocaleString('id-ID', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+    function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function userCell(name, email, avatar) {
+      const av = avatar ? `<img src="${escH(avatar)}" alt="" />` : `${(name||'?')[0].toUpperCase()}`;
+      return `<div class="user-cell">
+        <div class="user-av">${av}</div>
+        <div><div class="user-name">${escH(name||'—')}</div><div class="user-email">${escH(email||'')}</div></div>
+      </div>`;
+    }
+
+    // ─── Load Stats ────────────────────────────────────────────────
+    async function loadStats() {
+      try {
+        const r = await fetch('/api/admin/stats');
+        if (!r.ok) return;
+        const d = await r.json();
+        document.getElementById('s-users').textContent = d.totalUsers;
+        document.getElementById('s-new').textContent = d.newToday;
+        document.getElementById('s-convs').textContent = d.totalConvs;
+        document.getElementById('s-msgs').textContent = d.totalMsgs;
+        document.getElementById('s-feedback').textContent = d.totalFeedback;
+      } catch(e) {}
+    }
+
+    // ─── Feedback ──────────────────────────────────────────────────
+    async function loadFeedback() {
+      document.getElementById('fbBody').innerHTML = '<tr><td colspan="4" class="loading">Memuat...</td></tr>';
+      try {
+        const r = await fetch('/api/admin/feedback');
+        allFeedback = await r.json();
+        renderFeedback(allFeedback);
+      } catch(e) {
+        document.getElementById('fbBody').innerHTML = '<tr><td colspan="4" class="empty-state">Gagal memuat data.</td></tr>';
+      }
+    }
+    function renderFeedback(rows) {
+      document.getElementById('fb-count').textContent = rows.length;
+      if (!rows.length) {
+        document.getElementById('fbBody').innerHTML = '<tr><td colspan="4" class="empty-state">Belum ada masukan dari pengguna.</td></tr>';
+        return;
+      }
+      document.getElementById('fbBody').innerHTML = rows.map(f => `
+        <tr>
+          <td>${userCell(f.user_name, f.user_email, f.user_avatar)}</td>
+          <td><span class="type-badge ${typeCls[f.type]||'type-general'}">${typeLabel[f.type]||f.type}</span></td>
+          <td class="msg-cell">${escH(f.message)}</td>
+          <td class="time-text">${fmtTime(f.created_at)}</td>
+        </tr>`).join('');
+    }
+    function filterFeedback(q) {
+      const lq = q.toLowerCase();
+      renderFeedback(allFeedback.filter(f =>
+        (f.message||'').toLowerCase().includes(lq) ||
+        (f.user_name||'').toLowerCase().includes(lq) ||
+        (f.user_email||'').toLowerCase().includes(lq) ||
+        (f.type||'').toLowerCase().includes(lq)
+      ));
+    }
+
+    // ─── Activity ──────────────────────────────────────────────────
+    async function loadActivity() {
+      document.getElementById('actBody').innerHTML = '<tr><td colspan="6" class="loading">Memuat...</td></tr>';
+      try {
+        const r = await fetch('/api/admin/activity');
+        allActivity = await r.json();
+        renderActivity(allActivity);
+      } catch(e) {
+        document.getElementById('actBody').innerHTML = '<tr><td colspan="6" class="empty-state">Gagal memuat data.</td></tr>';
+      }
+    }
+    function renderActivity(rows) {
+      document.getElementById('act-count').textContent = rows.length;
+      if (!rows.length) {
+        document.getElementById('actBody').innerHTML = '<tr><td colspan="6" class="empty-state">Belum ada log aktivitas.</td></tr>';
+        return;
+      }
+      document.getElementById('actBody').innerHTML = rows.map(a => `
+        <tr>
+          <td>${userCell(a.user_name, a.user_email, null)}</td>
+          <td><span class="type-badge ${typeCls[a.action]||'type-general'}">${actionLabel[a.action]||a.action}</span></td>
+          <td style="max-width:220px;font-size:13px;">${escH(a.detail||'')}</td>
+          <td class="ip-text">${escH(a.ip_address||'—')}</td>
+          <td class="dev-text" title="${escH(a.device||'')}">${escH((a.device||'').split(' ').slice(0,4).join(' '))}</td>
+          <td class="time-text">${fmtTime(a.created_at)}</td>
+        </tr>`).join('');
+    }
+    function filterActivity(q) {
+      const lq = q.toLowerCase();
+      renderActivity(allActivity.filter(a =>
+        (a.user_name||'').toLowerCase().includes(lq) ||
+        (a.user_email||'').toLowerCase().includes(lq) ||
+        (a.action||'').toLowerCase().includes(lq) ||
+        (a.detail||'').toLowerCase().includes(lq) ||
+        (a.ip_address||'').toLowerCase().includes(lq)
+      ));
+    }
+
+    // ─── Users ─────────────────────────────────────────────────────
+    async function loadUsers() {
+      document.getElementById('usrBody').innerHTML = '<tr><td colspan="5" class="loading">Memuat...</td></tr>';
+      try {
+        const r = await fetch('/api/admin/users');
+        allUsers = await r.json();
+        renderUsers(allUsers);
+      } catch(e) {
+        document.getElementById('usrBody').innerHTML = '<tr><td colspan="5" class="empty-state">Gagal memuat data.</td></tr>';
+      }
+    }
+    function renderUsers(rows) {
+      document.getElementById('usr-count').textContent = rows.length;
+      if (!rows.length) {
+        document.getElementById('usrBody').innerHTML = '<tr><td colspan="5" class="empty-state">Belum ada pengguna terdaftar.</td></tr>';
+        return;
+      }
+      const planIcon = { free:'🌱', basic:'⚡', pro:'🚀', max:'👑' };
+      document.getElementById('usrBody').innerHTML = rows.map(u => `
+        <tr>
+          <td>${userCell(u.name, u.email, u.avatar)}</td>
+          <td><span class="plan-tag">${planIcon[u.plan]||'🌱'} ${(u.plan||'free').charAt(0).toUpperCase()+(u.plan||'free').slice(1)}</span></td>
+          <td style="font-size:13px;font-weight:600;">${u.conv_count||0}</td>
+          <td style="font-size:13px;font-weight:600;">${u.msg_count||0}</td>
+          <td class="time-text">${fmtTime(u.created_at)}</td>
+        </tr>`).join('');
+    }
+    function filterUsers(q) {
+      const lq = q.toLowerCase();
+      renderUsers(allUsers.filter(u =>
+        (u.name||'').toLowerCase().includes(lq) ||
+        (u.email||'').toLowerCase().includes(lq) ||
+        (u.plan||'').toLowerCase().includes(lq)
+      ));
+    }
+
+    // ─── Tabs ──────────────────────────────────────────────────────
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['feedback','activity','users'][i] === name));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-'+name).classList.add('active');
+      if (name === 'activity' && !allActivity.length) loadActivity();
+      if (name === 'users' && !allUsers.length) loadUsers();
+    }
+
+    async function logout() {
+      await fetch('/api/logout', { method: 'POST' });
+      location.href = '/';
+    }
+
+    // ─── Init ──────────────────────────────────────────────────────
+    async function init() {
+      try {
+        const r = await fetch('/api/user');
+        if (!r.ok) { location.href = '/'; return; }
+        const u = await r.json();
+        document.getElementById('adminEmail').textContent = u.email;
+      } catch(e) { location.href = '/'; }
+      loadStats();
+      loadFeedback();
+    }
+    init();
+  </script>
+</body>
+</html>
