@@ -93,6 +93,22 @@ function logActivity(userId, action, detail, req) {
   } catch (e) {}
 }
 
+function getAdminEmails() {
+  return (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "")
+    .split(",")
+    .map(email => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isAdminUser(user) {
+  if (!user?.email) return false;
+  return getAdminEmails().includes(user.email.toLowerCase());
+}
+
+function wantsHtml(req) {
+  return req.accepts(["html", "json"]) === "html";
+}
+
 // ─── Daily message limit ───────────────────────────────────────────────────
 const PLAN_LIMITS = { free: 10, basic: 100, pro: Infinity, max: Infinity };
 
@@ -193,23 +209,68 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(express.static(path.join(__dirname, "public")));
 
 const requireAuth = (req, res, next) => {
   if (req.isAuthenticated()) return next();
   res.status(401).json({ error: "Unauthorized" });
 };
 
+const requireAdmin = (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    if (wantsHtml(req)) return res.redirect("/admin/login");
+    return res.status(401).json({ error: "Login required" });
+  }
+  if (!getAdminEmails().length) {
+    if (wantsHtml(req)) return res.status(403).send(adminStatusPage("Admin belum dikonfigurasi", "Isi ADMIN_EMAIL di environment dengan email Google admin kamu, lalu restart server.", false));
+    return res.status(403).json({ error: "ADMIN_EMAIL not configured" });
+  }
+  if (!isAdminUser(req.user)) {
+    if (wantsHtml(req)) return res.status(403).send(adminStatusPage("Akses ditolak", `Akun ${req.user.email || "ini"} bukan admin XYA AI.`, true));
+    return res.status(403).json({ error: "Access denied" });
+  }
+  next();
+};
+
+function adminLoginPage(req) {
+  const isLoggedIn = req.isAuthenticated();
+  const denied = isLoggedIn && !isAdminUser(req.user);
+  const title = denied ? "Akses Admin Ditolak" : "Login Admin XYA AI";
+  const desc = denied
+    ? `Akun ${req.user.email || "ini"} sudah login, tetapi bukan email admin yang diizinkan.`
+    : "Masuk dengan akun Google admin untuk membuka dashboard admin.";
+  const button = denied
+    ? `<form method="post" action="/api/logout"><button type="submit" class="btn ghost">Keluar</button></form>`
+    : `<a class="btn" href="/auth/google?redirect=/admin">Masuk dengan Google</a>`;
+  return `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet"><style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f8faff;font-family:Sora,system-ui,sans-serif;color:#0f172a}.card{width:min(420px,calc(100% - 32px));background:white;border:1px solid #e2e8f0;border-radius:24px;padding:34px;text-align:center;box-shadow:0 20px 70px rgba(15,23,42,.1)}img{width:58px;height:58px;border-radius:16px;box-shadow:0 8px 24px rgba(79,70,229,.2)}h1{font-size:26px;margin:18px 0 10px;letter-spacing:-.8px}p{color:#64748b;line-height:1.6;margin:0 0 24px}.btn{display:inline-flex;align-items:center;justify-content:center;width:100%;border:0;border-radius:14px;background:#4f46e5;color:white;text-decoration:none;font-weight:800;font-size:15px;padding:13px 18px;cursor:pointer;font-family:Sora,system-ui,sans-serif}.btn:hover{background:#3730a3}.ghost{background:#fee2e2;color:#dc2626}.ghost:hover{background:#fecaca}.back{display:block;margin-top:16px;color:#64748b;text-decoration:none;font-size:13px;font-weight:700}</style></head><body><main class="card"><img src="/logo.png" alt="XYA AI"><h1>${title}</h1><p>${desc}</p>${button}<a class="back" href="/">Kembali ke Beranda</a></main></body></html>`;
+}
+
+function adminStatusPage(title, desc, showLogout) {
+  return `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:system-ui,sans-serif;background:#f8faff;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;color:#0f172a}.box{background:white;border:1px solid #e2e8f0;border-radius:20px;padding:32px;max-width:420px;text-align:center;box-shadow:0 12px 50px rgba(15,23,42,.08)}p{color:#64748b;line-height:1.6}.btn{display:inline-block;margin:8px;padding:10px 18px;border-radius:10px;background:#4f46e5;color:white;text-decoration:none;font-weight:700;border:0;cursor:pointer}.danger{background:#dc2626}</style></head><body><div class="box"><h1>${title}</h1><p>${desc}</p><a class="btn" href="/">Beranda</a>${showLogout ? '<form method="post" action="/api/logout" style="display:inline"><button class="btn danger" type="submit">Keluar</button></form>' : ""}</div></body></html>`;
+}
+
 // ─── Auth Routes ───────────────────────────────────────────────────────────
-app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+app.get("/auth/google", (req, res, next) => {
+  const redirect = typeof req.query.redirect === "string" ? req.query.redirect : "";
+  if (redirect.startsWith("/") && !redirect.startsWith("//")) req.session.returnTo = redirect;
+  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+});
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/?error=spam_blocked", failureMessage: true }),
-  (req, res) => res.redirect("/chat.html")
+  (req, res) => {
+    const target = req.session.returnTo || "/chat.html";
+    delete req.session.returnTo;
+    res.redirect(target);
+  }
 );
 app.post("/api/logout", (req, res) => {
-  req.logout(() => res.json({ success: true }));
+  req.logout(() => {
+    if (wantsHtml(req)) return res.redirect("/");
+    res.json({ success: true });
+  });
 });
+app.get("/admin.html", requireAdmin, (req, res) => res.redirect("/admin"));
+app.use(express.static(path.join(__dirname, "public")));
 app.get("/api/user", requireAuth, (req, res) => {
   const { id, name, email, avatar, plan, created_at } = req.user;
   const limit = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
@@ -283,14 +344,11 @@ app.post("/api/feedback", requireAuth, (req, res) => {
 });
 
 // ─── Admin ──────────────────────────────────────────────────────────────────
-const requireAdmin = (req, res, next) => {
-  if (!req.isAuthenticated()) return res.status(401).json({ error: "Login required" });
-  const adminEmail = process.env.ADMIN_EMAIL || "";
-  if (!adminEmail) return res.status(403).json({ error: "ADMIN_EMAIL not configured" });
-  if (req.user.email !== adminEmail) return res.status(403).json({ error: "Access denied" });
-  next();
-};
+app.get("/admin/login", (req, res) => res.send(adminLoginPage(req)));
 app.get("/admin", requireAdmin, (req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
+app.get("/api/admin/me", requireAdmin, (req, res) => {
+  res.json({ id: req.user.id, name: req.user.name, email: req.user.email, avatar: req.user.avatar });
+});
 app.get("/api/admin/feedback", requireAdmin, (req, res) => {
   res.json(db.prepare(`SELECT f.id, f.type, f.message, f.created_at, u.name as user_name, u.email as user_email, u.avatar as user_avatar FROM feedback f LEFT JOIN users u ON f.user_id = u.id ORDER BY f.created_at DESC LIMIT 200`).all());
 });
