@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XYABOT AI — Asisten AI Cerdas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f8faff;
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-light: #eef2ff;
+      --cyan: #06b6d4;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --card: #ffffff;
+      --shadow: 0 4px 24px rgba(79,70,229,0.08);
+      --radius: 16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* Background blobs */
+    .bg-blobs {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .blob {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.12;
+      animation: blobFloat 8s ease-in-out infinite alternate;
+    }
+    .blob-1 { width: 600px; height: 600px; background: var(--primary); top: -200px; right: -100px; }
+    .blob-2 { width: 400px; height: 400px; background: var(--cyan); bottom: -100px; left: -100px; animation-delay: 2s; }
+    .blob-3 { width: 300px; height: 300px; background: #818cf8; top: 40%; left: 30%; animation-delay: 4s; }
+    @keyframes blobFloat { from { transform: translate(0,0) scale(1); } to { transform: translate(20px,30px) scale(1.05); } }
+
+    /* Navbar */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 68px;
+      background: rgba(255,255,255,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(226,232,240,0.6);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-logo-icon svg { width: 20px; height: 20px; fill: white; }
+    .nav-logo-text { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+    .nav-logo-text span { color: var(--primary); }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .btn-lang {
+      padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
+      background: white; font-family: 'Sora', sans-serif; font-size: 13px;
+      font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+    }
+    .btn-lang:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-login {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 20px; border-radius: 10px; border: none;
+      background: var(--primary); color: white;
+      font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: all 0.2s;
+      box-shadow: 0 2px 12px rgba(79,70,229,0.3);
+    }
+    .btn-login:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(79,70,229,0.4); }
+
+    /* Hero */
+    .hero {
+      position: relative; z-index: 1;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 120px 24px 80px;
+      text-align: center;
+    }
+    .hero-content { max-width: 720px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 16px; border-radius: 100px;
+      background: var(--primary-light); border: 1px solid #c7d2fe;
+      font-size: 13px; font-weight: 600; color: var(--primary);
+      margin-bottom: 28px; animation: fadeInUp 0.6s ease both;
+    }
+    .hero-badge::before { content: '✦'; font-size: 11px; }
+    h1 {
+      font-size: clamp(40px, 7vw, 72px);
+      font-weight: 800; line-height: 1.05; letter-spacing: -2px;
+      color: var(--text); margin-bottom: 24px;
+      animation: fadeInUp 0.6s 0.1s ease both;
+    }
+    h1 .gradient-text {
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-desc {
+      font-size: 18px; font-weight: 400; color: var(--text-muted);
+      line-height: 1.7; max-width: 520px; margin: 0 auto 40px;
+      animation: fadeInUp 0.6s 0.2s ease both;
+    }
+    .hero-cta { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; animation: fadeInUp 0.6s 0.3s ease both; }
+    .btn-google {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 28px; border-radius: 14px; border: none;
+      background: var(--primary); color: white;
+      font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: all 0.25s;
+      box-shadow: 0 4px 24px rgba(79,70,229,0.35);
+    }
+    .btn-google:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(79,70,229,0.45); }
+    .btn-google svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .hero-note { font-size: 13px; color: var(--text-muted); }
+
+    /* Chat preview */
+    .chat-preview {
+      position: relative; z-index: 1;
+      max-width: 700px; margin: 0 auto 120px;
+      padding: 0 24px;
+      animation: fadeInUp 0.8s 0.4s ease both;
+    }
+    .preview-window {
+      background: white; border-radius: 20px;
+      box-shadow: 0 20px 80px rgba(15,23,42,0.1), 0 0 0 1px var(--border);
+      overflow: hidden;
+    }
+    .preview-bar {
+      background: #f8faff; padding: 14px 20px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
+    .preview-title { margin-left: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .preview-messages { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .msg { display: flex; gap: 12px; align-items: flex-start; }
+    .msg-avatar {
+      width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .msg-ai .msg-avatar { background: linear-gradient(135deg, var(--primary), var(--cyan)); }
+    .msg-user { flex-direction: row-reverse; }
+    .msg-user .msg-avatar { background: #e2e8f0; }
+    .msg-bubble {
+      padding: 12px 16px; border-radius: 14px; font-size: 14px;
+      line-height: 1.6; max-width: 75%;
+    }
+    .msg-ai .msg-bubble { background: var(--bg2); color: var(--text); border-bottom-left-radius: 4px; }
+    .msg-user .msg-bubble { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+    .typing { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+    .typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); animation: typing 1.2s ease infinite; }
+    .typing span:nth-child(2) { animation-delay: 0.2s; } .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing { 0%,80%,100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+
+    /* Features */
+    .features {
+      position: relative; z-index: 1;
+      padding: 80px 24px 120px; background: var(--bg2);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+    .features-inner { max-width: 960px; margin: 0 auto; }
+    .section-label { text-align: center; margin-bottom: 56px; }
+    .section-label h2 { font-size: 36px; font-weight: 700; letter-spacing: -1px; margin-bottom: 12px; }
+    .section-label p { color: var(--text-muted); font-size: 16px; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+    .feature-card {
+      background: white; border-radius: var(--radius); padding: 28px 24px;
+      border: 1px solid var(--border); transition: all 0.25s;
+    }
+    .feature-card:hover { border-color: #c7d2fe; box-shadow: var(--shadow); transform: translateY(-2px); }
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: var(--primary-light); display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 16px;
+    }
+    .feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .feature-card p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+    /* CTA */
+    .cta-section {
+      position: relative; z-index: 1;
+      padding: 100px 24px; text-align: center;
+    }
+    .cta-section h2 { font-size: 40px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px; }
+    .cta-section p { color: var(--text-muted); font-size: 17px; margin-bottom: 36px; }
+
+    /* Footer */
+    footer {
+      position: relative; z-index: 1;
+      padding: 28px 40px; text-align: center;
+      border-top: 1px solid var(--border); font-size: 13px; color: var(--text-muted);
+    }
+
+    /* Error banner */
+    .error-banner {
+      display: none; background: #fef2f2; border: 1px solid #fecaca;
+      color: #dc2626; padding: 12px 20px; border-radius: 10px;
+      font-size: 14px; margin-top: 16px; animation: fadeInUp 0.3s ease;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 20px; }
+      .btn-login span { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- Navbar -->
+  <nav>
+    <a class="nav-logo" href="/">
+      <div class="nav-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+      </div>
+      <span class="nav-logo-text">XYABOT <span>AI</span></span>
+    </a>
+    <div class="nav-right">
+      <button class="btn-lang" id="langToggle" onclick="toggleLang()">🌐 EN</button>
+      <a href="/auth/google" class="btn-login">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+        <span data-id="nav-login">Masuk</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge" data-id="badge">✦ AI Generasi Baru</div>
+      <h1 data-id="hero-title">
+        Asisten AI yang<br>
+        <span class="gradient-text">Benar-benar Pintar</span>
+      </h1>
+      <p class="hero-desc" data-id="hero-desc">
+        XYABOT AI siap membantu kamu — dari menjawab pertanyaan, menulis konten, hingga memecahkan masalah kompleks. Cepat, akurat, dan mudah digunakan.
+      </p>
+      <div class="hero-cta">
+        <a href="/auth/google" class="btn-google">
+          <svg viewBox="0 0 48 48"><path fill="#FFF" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
+          <span data-id="cta-google">Mulai dengan Google — Gratis</span>
+        </a>
+      </div>
+      <div class="error-banner" id="errorBanner" data-id="error-msg">
+        Login gagal. Coba lagi.
+      </div>
+      <p class="hero-note" style="margin-top:16px;" data-id="hero-note">Tidak perlu kartu kredit • Langsung bisa digunakan</p>
+    </div>
+  </section>
+
+  <!-- Chat Preview -->
+  <div class="chat-preview">
+    <div class="preview-window">
+      <div class="preview-bar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="preview-title">XYABOT AI</span>
+      </div>
+      <div class="preview-messages">
+        <div class="msg msg-user">
+          <div class="msg-avatar">👤</div>
+          <div class="msg-bubble" data-id="preview-q">Hei, bisa bantu saya membuat email profesional?</div>
+        </div>
+        <div class="msg msg-ai">
+          <div class="msg-avatar">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+          </div>
+          <div class="msg-bubble" data-id="preview-a">Tentu! Saya akan bantu Anda membuat email yang profesional dan efektif. Bisa tolong ceritakan topik email dan kepada siapa emailnya ditujukan?</div>
+        </div>
+        <div class="msg msg-ai">
+          <div class="msg-avatar">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+          </div>
+          <div class="msg-bubble">
+            <div class="typing"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="features-inner">
+      <div class="section-label">
+        <h2 data-id="feat-title">Semua yang kamu butuhkan</h2>
+        <p data-id="feat-sub">Dirancang untuk membantu kamu bekerja lebih cepat dan cerdas</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <h3 data-id="f1-title">AI yang Cerdas</h3>
+          <p data-id="f1-desc">Didukung teknologi AI mutakhir yang mampu memahami konteks dan memberikan jawaban akurat.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <h3 data-id="f2-title">Riwayat Chat</h3>
+          <p data-id="f2-desc">Semua percakapan tersimpan otomatis. Lanjutkan chat kapanpun kamu mau.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌐</div>
+          <h3 data-id="f3-title">Dua Bahasa</h3>
+          <p data-id="f3-desc">Tersedia dalam Bahasa Indonesia dan Inggris. Pilih sesuai kebutuhanmu.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3 data-id="f4-title">Login Aman</h3>
+          <p data-id="f4-desc">Masuk dengan akun Google kamu. Aman, cepat, tanpa perlu buat akun baru.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2 data-id="cta-title">Siap mencoba<br><span class="gradient-text">XYABOT AI?</span></h2>
+    <p data-id="cta-desc">Bergabung sekarang dan rasakan pengalaman AI yang berbeda.</p>
+    <a href="/auth/google" class="btn-google" style="display:inline-flex;">
+      <svg viewBox="0 0 48 48"><path fill="#FFF" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
+      <span data-id="cta2-btn">Mulai Gratis dengan Google</span>
+    </a>
+  </section>
+
+  <footer>
+    <p>© 2024 <strong>XYABOT AI</strong> — <span data-id="footer-text">Dibuat dengan ❤️</span></p>
+  </footer>
+
+  <script>
+    // Check error param
+    const params = new URLSearchParams(location.search);
+    if (params.get('error')) document.getElementById('errorBanner').style.display = 'block';
+
+    // Check if already logged in
+    fetch('/api/user').then(r => { if (r.ok) location.href = '/chat.html'; }).catch(() => {});
+
+    // Language toggle
+    let lang = localStorage.getItem('xyabot_lang') || 'id';
+    const translations = {
+      id: {
+        'badge': '✦ AI Generasi Baru',
+        'hero-title': 'Asisten AI yang<br><span class="gradient-text">Benar-benar Pintar</span>',
+        'hero-desc': 'XYABOT AI siap membantu kamu — dari menjawab pertanyaan, menulis konten, hingga memecahkan masalah kompleks. Cepat, akurat, dan mudah digunakan.',
+        'cta-google': 'Mulai dengan Google — Gratis',
+        'hero-note': 'Tidak perlu kartu kredit • Langsung bisa digunakan',
+        'preview-q': 'Hei, bisa bantu saya membuat email profesional?',
+        'preview-a': 'Tentu! Saya akan bantu Anda membuat email yang profesional dan efektif. Bisa tolong ceritakan topik email dan kepada siapa emailnya ditujukan?',
+        'feat-title': 'Semua yang kamu butuhkan',
+        'feat-sub': 'Dirancang untuk membantu kamu bekerja lebih cepat dan cerdas',
+        'f1-title': 'AI yang Cerdas', 'f1-desc': 'Didukung teknologi AI mutakhir yang mampu memahami konteks dan memberikan jawaban akurat.',
+        'f2-title': 'Riwayat Chat', 'f2-desc': 'Semua percakapan tersimpan otomatis. Lanjutkan chat kapanpun kamu mau.',
+        'f3-title': 'Dua Bahasa', 'f3-desc': 'Tersedia dalam Bahasa Indonesia dan Inggris. Pilih sesuai kebutuhanmu.',
+        'f4-title': 'Login Aman', 'f4-desc': 'Masuk dengan akun Google kamu. Aman, cepat, tanpa perlu buat akun baru.',
+        'cta-title': 'Siap mencoba<br><span class="gradient-text">XYABOT AI?</span>',
+        'cta-desc': 'Bergabung sekarang dan rasakan pengalaman AI yang berbeda.',
+        'cta2-btn': 'Mulai Gratis dengan Google',
+        'footer-text': 'Dibuat dengan ❤️',
+        'nav-login': 'Masuk', 'error-msg': 'Login gagal. Coba lagi.',
+      },
+      en: {
+        'badge': '✦ Next Generation AI',
+        'hero-title': 'An AI Assistant That\'s<br><span class="gradient-text">Truly Intelligent</span>',
+        'hero-desc': 'XYABOT AI is ready to help you — from answering questions and writing content to solving complex problems. Fast, accurate, and easy to use.',
+        'cta-google': 'Get Started with Google — Free',
+        'hero-note': 'No credit card needed • Ready to use instantly',
+        'preview-q': 'Hey, can you help me write a professional email?',
+        'preview-a': 'Of course! I\'d be happy to help you write a professional and effective email. Could you tell me the topic and who it\'s addressed to?',
+        'feat-title': 'Everything you need',
+        'feat-sub': 'Designed to help you work faster and smarter',
+        'f1-title': 'Smart AI', 'f1-desc': 'Powered by cutting-edge AI technology that understands context and delivers accurate answers.',
+        'f2-title': 'Chat History', 'f2-desc': 'All conversations are saved automatically. Continue any chat whenever you want.',
+        'f3-title': 'Two Languages', 'f3-desc': 'Available in Indonesian and English. Choose what works best for you.',
+        'f4-title': 'Secure Login', 'f4-desc': 'Sign in with your Google account. Secure, fast, no new account needed.',
+        'cta-title': 'Ready to try<br><span class="gradient-text">XYABOT AI?</span>',
+        'cta-desc': 'Join now and experience AI like never before.',
+        'cta2-btn': 'Start Free with Google',
+        'footer-text': 'Made with ❤️',
+        'nav-login': 'Sign In', 'error-msg': 'Login failed. Please try again.',
+      }
+    };
+
+    function applyLang(l) {
+      lang = l;
+      localStorage.setItem('xyabot_lang', l);
+      document.getElementById('langToggle').textContent = l === 'id' ? '🌐 EN' : '🌐 ID';
+      const t = translations[l];
+      document.querySelectorAll('[data-id]').forEach(el => {
+        const key = el.getAttribute('data-id');
+        if (t[key]) el.innerHTML = t[key];
+      });
+    }
+
+    function toggleLang() { applyLang(lang === 'id' ? 'en' : 'id'); }
+    applyLang(lang);
+  </script>
+</body>
+</html>
