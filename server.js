@@ -3,7 +3,7 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const session = require("express-session");
 const Database = require("better-sqlite3");
-const Anthropic = require("@anthropic-ai/sdk");
+const OpenAI = require("openai"); // ✅ GANTI
 const { randomUUID } = require("crypto");
 const path = require("path");
 
@@ -97,6 +97,11 @@ const requireAuth = (req, res, next) => {
   res.status(401).json({ error: "Unauthorized" });
 };
 
+// ─── OpenAI Setup ─────────────────────────────────────────────────────────
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
 // ─── Auth Routes ───────────────────────────────────────────────────────────
 app.get(
   "/auth/google",
@@ -159,8 +164,6 @@ app.delete("/api/conversations/:id", requireAuth, (req, res) => {
 });
 
 // ─── Chat (Streaming) ──────────────────────────────────────────────────────
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
 app.post("/api/chat", requireAuth, async (req, res) => {
   const { conversationId, message, language = "id" } = req.body;
   if (!message || !conversationId)
@@ -171,12 +174,10 @@ app.post("/api/chat", requireAuth, async (req, res) => {
     .get(conversationId, req.user.id);
   if (!conv) return res.status(404).json({ error: "Conversation not found" });
 
-  // Save user message
   db.prepare(
     "INSERT INTO messages (id, conversation_id, role, content) VALUES (?, ?, ?, ?)"
   ).run(randomUUID(), conversationId, "user", message);
 
-  // Auto-title after first message
   if (conv.title === "Chat Baru" || conv.title === "New Chat") {
     const title = message.length > 45 ? message.substring(0, 45) + "…" : message;
     db.prepare("UPDATE conversations SET title = ? WHERE id = ?").run(
@@ -184,7 +185,6 @@ app.post("/api/chat", requireAuth, async (req, res) => {
     );
   }
 
-  // Get full history
   const history = db
     .prepare(
       "SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC"
@@ -193,8 +193,8 @@ app.post("/api/chat", requireAuth, async (req, res) => {
 
   const systemPrompt =
     language === "id"
-      ? "Kamu adalah XYABOT AI, asisten AI yang cerdas, ramah, dan membantu. Jawab semua pertanyaan dengan bahasa Indonesia yang natural, informatif, dan mudah dipahami. Gunakan formatting markdown bila perlu."
-      : "You are XYABOT AI, a smart, friendly, and helpful AI assistant. Answer all questions in natural, informative, and easy-to-understand English. Use markdown formatting when appropriate.";
+      ? "Kamu adalah XYABOT AI, asisten AI yang cerdas, ramah, dan membantu."
+      : "You are XYABOT AI, a smart, friendly, and helpful AI assistant.";
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -202,33 +202,35 @@ app.post("/api/chat", requireAuth, async (req, res) => {
 
   try {
     let fullResponse = "";
-    const stream = anthropic.messages.stream({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages: history,
+
+    const stream = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      stream: true,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...history
+      ]
     });
 
-    stream.on("text", (text) => {
-      fullResponse += text;
-      res.write(`data: ${JSON.stringify({ text })}\n\n`);
-    });
+    for await (const chunk of stream) {
+      const text = chunk.choices?.[0]?.delta?.content || "";
+      if (text) {
+        fullResponse += text;
+        res.write(`data: ${JSON.stringify({ text })}\n\n`);
+      }
+    }
 
-    stream.on("finalMessage", () => {
-      db.prepare(
-        "INSERT INTO messages (id, conversation_id, role, content) VALUES (?, ?, ?, ?)"
-      ).run(randomUUID(), conversationId, "assistant", fullResponse);
-      db.prepare(
-        "UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?"
-      ).run(conversationId);
-      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-      res.end();
-    });
+    db.prepare(
+      "INSERT INTO messages (id, conversation_id, role, content) VALUES (?, ?, ?, ?)"
+    ).run(randomUUID(), conversationId, "assistant", fullResponse);
 
-    stream.on("error", (err) => {
-      res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
-      res.end();
-    });
+    db.prepare(
+      "UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+    ).run(conversationId);
+
+    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+    res.end();
+
   } catch (err) {
     res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
     res.end();
