@@ -1215,26 +1215,32 @@
     function addTyping() {
       const c = document.getElementById('messages');
       document.getElementById('welcome')?.remove();
-      const row = document.createElement('div'); row.className='msg-row'; row.id='typingRow';
-      row.innerHTML=`<div class="msg-av ai"><img src="/logo.png"></div>
+      const row = document.createElement('div');
+      row.className = 'msg-row';
+      row.innerHTML = `<div class="msg-av ai"><img src="/logo.png"></div>
         <div class="msg-c"><div class="msg-sender-name">XYA AI</div>
-        <div class="bubble ai" id="streamBubble">
+        <div class="bubble ai">
           <div class="typing-indicator">
             <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
             <span>${t('typing-text')}</span>
           </div>
         </div></div>`;
-      c.appendChild(row); scrollBot();
+      c.appendChild(row);
+      scrollBot();
+      return row.querySelector('.bubble');
     }
     function addGenStatus(prompt, m2) {
       const c = document.getElementById('messages');
       document.getElementById('welcome')?.remove();
-      const row = document.createElement('div'); row.className='msg-row'; row.id='typingRow';
+      const row = document.createElement('div');
+      row.className = 'msg-row';
       const lbl = m2==='image'?t('gen-img'):t('gen-vid');
-      row.innerHTML=`<div class="msg-av ai"><img src="/logo.png"></div>
+      row.innerHTML = `<div class="msg-av ai"><img src="/logo.png"></div>
         <div class="msg-c"><div class="msg-sender-name">XYA AI</div>
-        <div class="bubble ai" id="streamBubble"><div class="gen-status"><div class="spinner"></div><span>${lbl}... "${escH(prompt.slice(0,60))}${prompt.length>60?'...':''}"</span></div></div></div>`;
-      c.appendChild(row); scrollBot();
+        <div class="bubble ai"><div class="gen-status"><div class="spinner"></div><span>${lbl}... "${escH(prompt.slice(0,60))}${prompt.length>60?'...':''}"</span></div></div></div>`;
+      c.appendChild(row);
+      scrollBot();
+      return row.querySelector('.bubble');
     }
     function scrollBot() { const c=document.getElementById('messages'); c.scrollTop=c.scrollHeight; }
 
@@ -1279,7 +1285,7 @@
         else if (fts) { addMsg('user',`📄 ${fts.name}${txt?'\n'+txt:''}`); msgTxt=`Analisis file: ${fts.name}\n\n${txt}`; }
         else addMsg('user', txt);
       }
-      addTyping();
+      const bubble = addTyping();
 
       try {
         const res = await fetch('/api/chat',{
@@ -1290,9 +1296,7 @@
         // Handle limit reached (429)
         if (res.status === 429) {
           const data = await res.json();
-          const typingRow = document.getElementById('typingRow');
-          if (typingRow) {
-            const bubble = document.getElementById('streamBubble');
+          if (bubble) {
             bubble.className = 'bubble ai error-bubble';
             bubble.innerHTML = `${escH(data.error)}<br><button class="retry-btn" onclick="openModal('upgradeModal')">🚀 Upgrade Sekarang</button>`;
           }
@@ -1303,7 +1307,6 @@
           return;
         }
 
-        const bubble = document.getElementById('streamBubble');
         if (bubble) bubble.innerHTML='';
         let full='', buf='';
         const reader = res.body.getReader(), dec = new TextDecoder();
@@ -1332,10 +1335,9 @@
           }
         }
       } catch(e) {
-        const b=document.getElementById('streamBubble');
-        if(b) {
-          b.className='bubble ai error-bubble';
-          b.innerHTML = `${t('error-generic')}<br><button class="retry-btn" onclick="sendChat('${lastFailedMessage?.replace(/'/g,'\\\'').slice(0,100)}')">${t('retry')}</button>`;
+        if(bubble) {
+          bubble.className='bubble ai error-bubble';
+          bubble.innerHTML = `${t('error-generic')}<br><button class="retry-btn" onclick="sendChat('${lastFailedMessage?.replace(/'/g,'\\\'').slice(0,100)}')">${t('retry')}</button>`;
         }
       } finally { setLoading(false); }
     }
@@ -1356,19 +1358,19 @@
       if(style) prompt=`${prompt}, ${style} style`;
       inp.value=''; autoGrow(inp);
       setLoading(true);
-      addMsg('user',`🎨 ${prompt}`); addGenStatus(prompt,'image');
+      addMsg('user',`🎨 ${prompt}`);
+      const bubble = addGenStatus(prompt,'image');
       try {
         const body={model,prompt,width:w,height:h,n:count};
         if(neg) body.negative_prompt=neg;
         const res=await fetch('https://api.ruxa.ai/v1/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify(body)});
-        const bubble=document.getElementById('streamBubble');
         if(!res.ok){const err=await res.json().catch(()=>({}));if(bubble){bubble.className='bubble ai error-bubble';bubble.innerHTML=`${t('error-generic')}`;}return;}
         const data=await res.json(); const imgs=data.data||[];
         if(!imgs.length){if(bubble){bubble.className='bubble ai error-bubble';bubble.innerHTML=t('error-generic');}return;}
         const arr=imgs.map(i=>{const url=i.url||i.b64_json;const src=url.startsWith('http')?url:`data:image/png;base64,${url}`;return`<img src="${src}" onclick="window.open(this.src,'_blank')"/>`;});
         if(bubble){bubble.innerHTML=`<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">✅ ${imgs.length} ${lang==='id'?'gambar berhasil':'images generated'}</div><div class="${imgs.length>1?'gen-img-grid':'gen-img-wrap'}">${arr.join('')}</div>`;}
         scrollBot();
-      } catch(e){const b=document.getElementById('streamBubble');if(b){b.className='bubble ai error-bubble';b.innerHTML=t('error-generic');}}
+      } catch(e){if(bubble){bubble.className='bubble ai error-bubble';bubble.innerHTML=t('error-generic');}}
       finally{setLoading(false);}
     }
 
@@ -1385,10 +1387,10 @@
       const asp=document.getElementById('vidAspect').value;
       inp.value=''; autoGrow(inp);
       setLoading(true);
-      addMsg('user',`🎬 ${prompt}`); addGenStatus(prompt,'video');
+      addMsg('user',`🎬 ${prompt}`);
+      const bubble = addGenStatus(prompt,'video');
       try {
         const res=await fetch('https://api.ruxa.ai/v1/videos/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model,prompt,duration:dur,resolution:res2,aspect_ratio:asp})});
-        const bubble=document.getElementById('streamBubble');
         if(!res.ok){if(bubble){bubble.className='bubble ai error-bubble';bubble.innerHTML=t('error-generic');}setLoading(false);return;}
         const job=await res.json(); const tid=job.id||job.task_id;
         if(!tid){const vurl=job.data?.[0]?.url;if(vurl&&bubble){bubble.innerHTML=`<div class="gen-video-wrap"><video src="${vurl}" controls></video></div>`;scrollBot();}else if(bubble){bubble.className='bubble ai error-bubble';bubble.innerHTML=t('error-generic');}setLoading(false);return;}
@@ -1405,7 +1407,7 @@
           }catch(e){setTimeout(poll,5000);}
         };
         setTimeout(poll,5000);
-      }catch(e){const b=document.getElementById('streamBubble');if(b){b.className='bubble ai error-bubble';b.innerHTML=t('error-generic');}setLoading(false);}
+      }catch(e){if(bubble){bubble.className='bubble ai error-bubble';bubble.innerHTML=t('error-generic');}setLoading(false);}
     }
 
     function sendChip(el) {
