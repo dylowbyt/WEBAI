@@ -478,7 +478,7 @@
   <script>
     const params = new URLSearchParams(location.search);
     if (params.get('error')) document.getElementById('errorBanner').style.display = 'block';
-    fetch('/api/user').then(r => { if (r.ok) location.href = '/chat.html'; }).catch(() => {});
+    fetch('/api/user').then(r => { if (r.ok) location.href = '/chat'; }).catch(() => {});
 
     let lang = localStorage.getItem('xyabot_lang') || 'id';
 

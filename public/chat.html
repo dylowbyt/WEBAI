@@ -222,11 +222,11 @@
     .msg-c { flex: 1; min-width: 0; }
     .msg-sender-name { font-size: 11.5px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
     .bubble {
-      padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.7;
-      max-width: 100%; word-break: break-word;
+      font-size: 14px; line-height: 1.7;
+      max-width: 100%; word-break: break-word; padding: 4px 0;
     }
-    .bubble.ai { background: var(--bubble-ai-bg); border: 1px solid var(--bubble-ai-border); border-bottom-left-radius: 4px; }
-    .bubble.user { background: var(--primary); color: white; border-bottom-right-radius: 4px; margin-left: auto; max-width: 80%; }
+    .bubble.ai { }
+    .bubble.user { margin-left: auto; max-width: 80%; }
     .user-side .msg-c { display: flex; flex-direction: column; align-items: flex-end; }
     .user-side .msg-sender-name { text-align: right; }
     .user-img-prev { max-width: 240px; border-radius: 10px; margin-bottom: 6px; display: block; }
@@ -470,7 +470,7 @@
   </style>
 </head>
 <body>
-  <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx,.md,.csv,.json,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFile(event)" />
+  <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx,.md,.csv,.json,.png,.jpg,.jpeg,.gif,.webp" multiple onchange="handleFile(event)" />
 
   <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
@@ -853,7 +853,7 @@
   <script>
     let user = null, allConvs = [], convs = [], activeId = null;
     let lang = localStorage.getItem('xya_lang') || 'id';
-    let streaming = false, mode = 'chat', pendingFile = null;
+    let streaming = false, mode = 'chat', pendingFiles = [];
     let lastFailedMessage = null;
 
     const i18n = {
@@ -1100,30 +1100,45 @@
       const imgR = document.getElementById('imgRows');
       const vidR = document.getElementById('vidRows');
       const inp = document.getElementById('msgInput');
-      if (m==='chat') { panel.classList.remove('show'); inp.placeholder = t('placeholder'); }
-      else if (m==='image') { panel.classList.add('show'); imgR.style.display=''; vidR.style.display='none'; inp.placeholder = t('placeholder-img'); }
-      else { panel.classList.add('show'); imgR.style.display='none'; vidR.style.display=''; inp.placeholder = t('placeholder-vid'); }
+      if (m==='chat') {
+        panel.classList.remove('show');
+        inp.placeholder = t('placeholder');
+      } else if (m==='image') {
+        panel.classList.add('show'); imgR.style.display=''; vidR.style.display='none';
+        inp.placeholder = t('placeholder-img');
+      } else {
+        panel.classList.add('show'); imgR.style.display='none'; vidR.style.display='';
+        inp.placeholder = t('placeholder-vid');
+      }
     }
 
     // ─── File ──────────────────────────────────────────────────────
     function handleFile(e) {
-      const f = e.target.files[0]; if (!f) return; e.target.value='';
-      const isImg = f.type.startsWith('image/');
-      const reader = new FileReader();
-      reader.onload = ev => { pendingFile = { name:f.name, type:f.type, dataUrl:ev.target.result, isImg }; renderFilePrev(); };
-      reader.readAsDataURL(f);
+      const files = Array.from(e.target.files); e.target.value='';
+      if (!files.length) return;
+      let loaded = 0;
+      files.forEach(f => {
+        const isImg = f.type.startsWith('image/');
+        const reader = new FileReader();
+        reader.onload = ev => {
+          pendingFiles.push({ name: f.name, type: f.type, dataUrl: ev.target.result, isImg });
+          loaded++;
+          if (loaded === files.length) renderFilePrev();
+        };
+        reader.readAsDataURL(f);
+      });
     }
     function renderFilePrev() {
       const a = document.getElementById('filePrev');
-      if (!pendingFile) { a.innerHTML=''; a.classList.remove('show'); return; }
+      if (!pendingFiles.length) { a.innerHTML=''; a.classList.remove('show'); return; }
       a.classList.add('show');
-      a.innerHTML = `
-        ${pendingFile.isImg ? `<img class="file-img-thumb" src="${pendingFile.dataUrl}" />` : ''}
-        <div class="file-badge">${pendingFile.isImg?'🖼️':'📄'} ${escH(pendingFile.name.slice(0,30))}
-          <button class="file-rm" onclick="clearFile()">×</button>
-        </div>`;
+      a.innerHTML = pendingFiles.map((f, i) => `
+        ${f.isImg ? `<img class="file-img-thumb" src="${f.dataUrl}" />` : ''}
+        <div class="file-badge">${f.isImg?'🖼️':'📄'} ${escH(f.name.slice(0,30))}
+          <button class="file-rm" onclick="clearFile(${i})">×</button>
+        </div>`).join('');
     }
-    function clearFile() { pendingFile=null; renderFilePrev(); }
+    function clearFile(i) { pendingFiles.splice(i, 1); renderFilePrev(); }
 
     // ─── Conversations ─────────────────────────────────────────────
     async function loadConvs() {
@@ -1212,6 +1227,18 @@
         <div class="bubble user"><img class="user-img-prev" src="${dataUrl}" />${text?`<div style="margin-top:5px;">${escH(text)}</div>`:''}</div></div>`;
       c.appendChild(row); scrollBot();
     }
+    function addMsgWithImgs(imgs, text, docs) {
+      const c = document.getElementById('messages');
+      document.getElementById('welcome')?.remove();
+      const row = document.createElement('div');
+      row.className='msg-row user-side';
+      const imgHtml = imgs.map(f=>`<img class="user-img-prev" src="${f.dataUrl}" style="max-width:160px;margin:2px;" />`).join('');
+      const docHtml = docs?.length ? `<div style="margin-top:4px;">${docs.map(d=>`<span style="font-size:12px;">📄 ${escH(d.name)}</span>`).join(' ')}</div>` : '';
+      row.innerHTML=`<div class="msg-av">${user?.avatar?`<img src="${user.avatar}">`:'👤'}</div>
+        <div class="msg-c"><div class="msg-sender-name">${t('you')}</div>
+        <div class="bubble user">${imgHtml}${docHtml}${text?`<div style="margin-top:5px;">${escH(text)}</div>`:''}</div></div>`;
+      c.appendChild(row); scrollBot();
+    }
     function addTyping() {
       const c = document.getElementById('messages');
       document.getElementById('welcome')?.remove();
@@ -1258,8 +1285,17 @@
     }
 
     // ─── Send ──────────────────────────────────────────────────────
+    function isImgRequest(txt) {
+      return /^(tolong\s+)?(buat(kan)?|bikin|generate|create|buatlah|bikinin)\s+(gambar|foto|image|picture|ilustrasi|lukisan|wallpaper)\b/i.test(txt.trim())
+          || /^(gambar|foto|image|picture|ilustrasi|lukisan)\s+\S/i.test(txt.trim());
+    }
+
     function doSend() {
-      if (mode==='chat') sendChat();
+      if (mode==='chat') {
+        const txt = document.getElementById('msgInput').value.trim();
+        if (txt && !pendingFiles.length && isImgRequest(txt)) { genImageOpenAI(txt); return; }
+        sendChat();
+      }
       else if (mode==='image') genImage();
       else genVideo();
     }
@@ -1268,29 +1304,43 @@
       if (streaming) return;
       const inp = document.getElementById('msgInput');
       const txt = retryMsg || inp.value.trim();
-      if (!txt && !pendingFile) return;
+      if (!txt && !pendingFiles.length) return;
       if (!activeId) await newChat();
 
-      let msgTxt = txt, fts = pendingFile;
+      let msgTxt = txt, fts = [...pendingFiles];
       if (!retryMsg) {
-        pendingFile=null; renderFilePrev();
+        pendingFiles=[]; renderFilePrev();
         inp.value=''; autoGrow(inp);
       }
 
       setLoading(true);
       lastFailedMessage = txt;
 
+      let imageDataList = [];
       if (!retryMsg) {
-        if (fts?.isImg) { addMsgWithImg(fts.dataUrl, txt); msgTxt=txt+(txt?'\n\n':'')+`[Gambar: ${fts.name}]`; }
-        else if (fts) { addMsg('user',`📄 ${fts.name}${txt?'\n'+txt:''}`); msgTxt=`Analisis file: ${fts.name}\n\n${txt}`; }
-        else addMsg('user', txt);
+        const imgs = fts.filter(f => f.isImg);
+        const docs = fts.filter(f => !f.isImg);
+        imageDataList = imgs.map(f => f.dataUrl);
+        if (imgs.length > 0 && docs.length === 0) {
+          addMsgWithImgs(imgs, txt);
+          if (!msgTxt) msgTxt = lang==='id' ? 'Apa yang ada di gambar ini?' : 'What is in these images?';
+        } else if (docs.length > 0 && imgs.length === 0) {
+          const names = docs.map(d => d.name).join(', ');
+          addMsg('user', `📄 ${names}${txt?'\n'+txt:''}`);
+          msgTxt = `Analisis file: ${names}\n\n${txt}`;
+        } else if (imgs.length > 0 || docs.length > 0) {
+          addMsgWithImgs(imgs, txt, docs);
+          if (!msgTxt) msgTxt = lang==='id' ? 'Apa yang ada di gambar ini?' : 'What is in these images?';
+        } else {
+          addMsg('user', txt);
+        }
       }
       const bubble = addTyping();
 
       try {
         const res = await fetch('/api/chat',{
           method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({conversationId:activeId, message:msgTxt, language:lang})
+          body: JSON.stringify({conversationId:activeId, message:msgTxt, language:lang, imageDataList})
         });
 
         // Handle limit reached (429)
@@ -1372,6 +1422,42 @@
         scrollBot();
       } catch(e){if(bubble){bubble.className='bubble ai error-bubble';bubble.innerHTML=t('error-generic');}}
       finally{setLoading(false);}
+    }
+
+    async function genImageOpenAI(promptOverride) {
+      if (streaming) return;
+      const inp = document.getElementById('msgInput');
+      const prompt = promptOverride || inp.value.trim();
+      if (!prompt) {
+        alert(lang === 'id' ? 'Tulis deskripsi gambar yang ingin dibuat!' : 'Write a description of the image to generate!');
+        return;
+      }
+      inp.value = ''; autoGrow(inp);
+      setLoading(true);
+      addMsg('user', `🖼️ ${prompt}`);
+      const bubble = addGenStatus(prompt, 'image');
+      try {
+        const res = await fetch('/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, size: '1024x1024', quality: 'standard', style: 'vivid' })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.url) {
+          if (bubble) { bubble.className = 'bubble ai error-bubble'; bubble.innerHTML = data.error || t('error-generic'); }
+          return;
+        }
+        let caption = '';
+        if (data.revised_prompt && data.revised_prompt !== prompt) {
+          caption = `<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:8px;font-style:italic;">"${escH(data.revised_prompt)}"</div>`;
+        }
+        if (bubble) {
+          bubble.innerHTML = `${caption}<div class="gen-img-wrap"><img src="${data.url}" onclick="window.open(this.src,'_blank')" title="${lang === 'id' ? 'Klik untuk buka penuh' : 'Click to open full size'}" /></div>`;
+        }
+        scrollBot();
+      } catch(e) {
+        if (bubble) { bubble.className = 'bubble ai error-bubble'; bubble.innerHTML = t('error-generic'); }
+      } finally { setLoading(false); }
     }
 
     async function genVideo() {
