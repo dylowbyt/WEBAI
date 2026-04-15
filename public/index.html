@@ -52,13 +52,14 @@
       background: rgba(255,255,255,0.85); backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(226,232,240,0.6);
     }
-    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
     .nav-logo-icon {
-      width: 36px; height: 36px; border-radius: 10px; overflow: hidden;
+      width: 48px; height: 48px; border-radius: 12px; overflow: hidden;
       display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(79,70,229,0.2);
     }
     .nav-logo-icon img { width: 100%; height: 100%; object-fit: cover; }
-    .nav-logo-text { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+    .nav-logo-text { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
     .nav-logo-text span { color: var(--primary); }
     .nav-right { display: flex; align-items: center; gap: 16px; }
     .btn-lang {
@@ -208,8 +209,9 @@
     }
 
     @media (max-width: 640px) {
-      nav { padding: 0 20px; }
-      .btn-login span { display: none; }
+      nav { padding: 0 16px; }
+      .nav-logo-icon { width: 40px; height: 40px; }
+      .nav-logo-text { font-size: 17px; }
     }
   </style>
 </head>
@@ -315,9 +317,9 @@
           <p data-id="f3-desc">Ubah prompt teks menjadi video AI yang memukau. Teknologi terdepan di ujung jarimu.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">💬</div>
-          <h3 data-id="f4-title">Riwayat Chat</h3>
-          <p data-id="f4-desc">Semua percakapan tersimpan otomatis. Lanjutkan chat kapanpun kamu mau.</p>
+          <div class="feature-icon">📎</div>
+          <h3 data-id="f4-title">Kirim File & Foto</h3>
+          <p data-id="f4-desc">Upload file dokumen, foto, atau ambil langsung dari kamera untuk dianalisis AI.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🌐</div>
@@ -367,7 +369,7 @@
         'f1-title': 'AI yang Cerdas', 'f1-desc': 'Didukung teknologi AI mutakhir yang mampu memahami konteks dan memberikan jawaban akurat.',
         'f2-title': 'Generate Gambar', 'f2-desc': 'Buat gambar AI berkualitas tinggi hanya dengan deskripsi teks. Powered by Ruxa.ai.',
         'f3-title': 'Generate Video', 'f3-desc': 'Ubah prompt teks menjadi video AI yang memukau. Teknologi terdepan di ujung jarimu.',
-        'f4-title': 'Riwayat Chat', 'f4-desc': 'Semua percakapan tersimpan otomatis. Lanjutkan chat kapanpun kamu mau.',
+        'f4-title': 'Kirim File & Foto', 'f4-desc': 'Upload file dokumen, foto, atau ambil langsung dari kamera untuk dianalisis AI.',
         'f5-title': 'Dua Bahasa', 'f5-desc': 'Tersedia dalam Bahasa Indonesia dan Inggris. Pilih sesuai kebutuhanmu.',
         'f6-title': 'Login Aman', 'f6-desc': 'Masuk dengan akun Google kamu. Aman, cepat, tanpa perlu buat akun baru.',
         'cta-title': 'Siap mencoba<br><span class="gradient-text">XYA AI?</span>',
@@ -389,7 +391,7 @@
         'f1-title': 'Smart AI', 'f1-desc': 'Powered by cutting-edge AI technology that understands context and delivers accurate answers.',
         'f2-title': 'Generate Images', 'f2-desc': 'Create high-quality AI images just from text descriptions. Powered by Ruxa.ai.',
         'f3-title': 'Generate Videos', 'f3-desc': 'Turn text prompts into stunning AI videos. Cutting-edge technology at your fingertips.',
-        'f4-title': 'Chat History', 'f4-desc': 'All conversations are saved automatically. Continue any chat whenever you want.',
+        'f4-title': 'Send Files & Photos', 'f4-desc': 'Upload documents, photos, or capture directly from camera for AI analysis.',
         'f5-title': 'Two Languages', 'f5-desc': 'Available in Indonesian and English. Choose what works best for you.',
         'f6-title': 'Secure Login', 'f6-desc': 'Sign in with your Google account. Secure, fast, no new account needed.',
         'cta-title': 'Ready to try<br><span class="gradient-text">XYA AI?</span>',

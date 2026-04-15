@@ -27,13 +27,14 @@
       display: flex; flex-direction: column; position: relative; z-index: 10;
     }
     .sidebar-head { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); }
-    .logo { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
     .logo-icon {
-      width: 32px; height: 32px; border-radius: 9px; overflow: hidden;
+      width: 44px; height: 44px; border-radius: 11px; overflow: hidden;
       display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(79,70,229,0.18); flex-shrink: 0;
     }
     .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
-    .logo-name { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo-name { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
     .logo-name span { color: var(--primary); }
     .btn-new {
       width: 100%; padding: 10px 14px; border-radius: 10px;
@@ -102,41 +103,35 @@
     .user-email { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .logout-btn {
       background: none; border: none; cursor: pointer; color: var(--text-muted);
-      padding: 5px; border-radius: 7px; transition: all 0.15s; flex-shrink: 0;
-      display: flex; align-items: center; gap: 4px; font-size: 11px; font-family: 'Sora', sans-serif;
+      padding: 6px; border-radius: 7px; transition: all 0.15s; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
     }
     .logout-btn:hover { background: #fee2e2; color: #dc2626; }
-    .logout-btn svg { width: 15px; height: 15px; display: block; }
+    .logout-btn svg { width: 16px; height: 16px; display: block; }
 
     /* ─── MAIN CHAT ───────────────────────────────── */
     .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
     .chat-header {
-      padding: 0 24px; height: 60px; min-height: 60px;
+      padding: 0 20px; height: 60px; min-height: 60px;
       border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; align-items: center; gap: 12px;
     }
     .chat-title { font-size: 15px; font-weight: 600; color: var(--text); }
     .chat-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .header-title-group { flex: 1; min-width: 0; }
     .mobile-menu-btn {
       display: none; background: none; border: none; cursor: pointer;
-      color: var(--text); padding: 6px; border-radius: 8px;
+      color: var(--text); padding: 6px; border-radius: 8px; flex-shrink: 0;
     }
-    .mobile-menu-btn svg { width: 20px; height: 20px; display: block; }
-
-    /* Mode tabs */
-    .mode-tabs {
-      display: flex; gap: 4px; padding: 8px 0;
+    .mobile-menu-btn svg { width: 22px; height: 22px; display: block; }
+    .mobile-logout-btn {
+      display: none; background: none; border: none; cursor: pointer;
+      color: var(--text-muted); padding: 6px; border-radius: 8px; flex-shrink: 0;
+      transition: all 0.15s;
     }
-    .mode-tab {
-      display: flex; align-items: center; gap: 6px;
-      padding: 6px 14px; border-radius: 8px; border: 1.5px solid var(--border);
-      background: white; font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600;
-      cursor: pointer; transition: all 0.2s; color: var(--text-muted);
-    }
-    .mode-tab:hover { border-color: var(--primary); color: var(--primary); }
-    .mode-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
-    .mode-tab span { font-size: 14px; }
+    .mobile-logout-btn:hover { background: #fee2e2; color: #dc2626; }
+    .mobile-logout-btn svg { width: 20px; height: 20px; display: block; }
 
     /* ─── MESSAGES ───────────────────────────────── */
     .messages {
@@ -189,11 +184,17 @@
     .user-row-msg .msg-content { display: flex; flex-direction: column; align-items: flex-end; }
     .user-row-msg .msg-sender { text-align: right; }
 
-    /* Generated image display */
+    /* Image preview in user message */
+    .user-image-preview { max-width: 260px; border-radius: 10px; margin-bottom: 6px; display: block; }
+
+    /* Generated image/video display */
     .gen-image-wrap { margin-top: 8px; }
     .gen-image-wrap img { max-width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; }
     .gen-video-wrap { margin-top: 8px; }
     .gen-video-wrap video { max-width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; }
+    .gen-image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 8px; }
+    .gen-image-grid img { width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; cursor: pointer; transition: transform 0.2s; }
+    .gen-image-grid img:hover { transform: scale(1.02); }
     .gen-status { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; padding: 8px 0; }
     .gen-status .spinner {
       width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--primary);
@@ -224,66 +225,139 @@
     @keyframes typingAnim { 0%,80%,100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
 
     /* ─── INPUT AREA ──────────────────────────────── */
-    .input-area { padding: 16px 24px 20px; border-top: 1px solid var(--border); }
+    .input-area { padding: 10px 20px 14px; border-top: 1px solid var(--border); }
 
-    /* Image/Video mode settings */
+    /* Gen settings panel */
     .gen-settings {
       display: none; background: var(--sidebar-bg); border: 1px solid var(--border);
-      border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; gap: 12px;
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; gap: 10px;
+      flex-wrap: wrap;
     }
-    .gen-settings.show { display: flex; flex-wrap: wrap; align-items: center; }
-    .gen-setting-item { display: flex; align-items: center; gap: 8px; }
+    .gen-settings.show { display: flex; }
+    .gen-row { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; align-items: center; }
+    .gen-setting-item { display: flex; align-items: center; gap: 6px; }
     .gen-setting-item label { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
     .gen-setting-item select, .gen-setting-item input[type="text"] {
-      padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border);
+      padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border);
       font-family: 'Sora', sans-serif; font-size: 12px; background: white;
-      color: var(--text); outline: none;
+      color: var(--text); outline: none; max-width: 130px;
     }
     .gen-setting-item select:focus, .gen-setting-item input:focus { border-color: var(--primary); }
     .api-key-row { width: 100%; display: flex; align-items: center; gap: 8px; }
     .api-key-row label { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
-    .api-key-row input { flex: 1; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); font-family: 'Sora', sans-serif; font-size: 12px; background: white; color: var(--text); outline: none; }
+    .api-key-row input {
+      flex: 1; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border);
+      font-family: 'Sora', sans-serif; font-size: 12px; background: white;
+      color: var(--text); outline: none;
+    }
     .api-key-row input:focus { border-color: var(--primary); }
+    .gen-negative-row { width: 100%; display: flex; align-items: center; gap: 8px; }
+    .gen-negative-row label { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+    .gen-negative-row input {
+      flex: 1; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border);
+      font-family: 'Sora', sans-serif; font-size: 12px; background: white;
+      color: var(--text); outline: none;
+    }
 
+    /* File preview badge */
+    .file-preview-area {
+      display: none; margin-bottom: 8px; padding: 8px 10px;
+      background: var(--primary-light); border: 1px solid #c7d2fe; border-radius: 10px;
+      align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .file-preview-area.show { display: flex; }
+    .file-badge {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 8px; background: white;
+      border: 1px solid #c7d2fe; font-size: 12px; font-weight: 600; color: var(--primary);
+    }
+    .file-badge-remove {
+      background: none; border: none; cursor: pointer; color: #94a3b8;
+      padding: 1px 3px; border-radius: 4px; font-size: 14px; line-height: 1;
+      transition: all 0.15s;
+    }
+    .file-badge-remove:hover { color: #dc2626; }
+    .file-img-preview {
+      max-height: 60px; max-width: 80px; border-radius: 6px; object-fit: cover;
+      border: 1px solid #c7d2fe;
+    }
+
+    /* Input wrap — ChatGPT style */
     .input-wrap {
-      display: flex; align-items: flex-end; gap: 10px;
+      display: flex; align-items: flex-end; gap: 8px;
       background: var(--sidebar-bg); border: 1.5px solid var(--border);
-      border-radius: 16px; padding: 10px 10px 10px 16px;
+      border-radius: 16px; padding: 8px 8px 8px 12px;
       transition: border-color 0.2s;
     }
     .input-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+
+    .left-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; padding-bottom: 2px; }
+    .action-btn {
+      width: 34px; height: 34px; border-radius: 9px; border: none; flex-shrink: 0;
+      background: white; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border);
+    }
+    .action-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .action-btn svg { width: 17px; height: 17px; display: block; }
+
     textarea {
       flex: 1; background: none; border: none; outline: none; resize: none;
       font-family: 'Sora', sans-serif; font-size: 14px; color: var(--text);
       line-height: 1.5; max-height: 160px; min-height: 22px;
+      padding: 6px 0;
     }
     textarea::placeholder { color: #94a3b8; }
+
     .send-btn {
-      width: 38px; height: 38px; border-radius: 10px; border: none; flex-shrink: 0;
+      width: 36px; height: 36px; border-radius: 10px; border: none; flex-shrink: 0;
       background: var(--primary); color: white; cursor: pointer; transition: all 0.2s;
       display: flex; align-items: center; justify-content: center;
     }
     .send-btn:hover:not(:disabled) { background: var(--primary-dark); transform: scale(1.05); }
     .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    .send-btn svg { width: 18px; height: 18px; }
-    .input-hint { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 8px; }
+    .send-btn svg { width: 17px; height: 17px; }
+
+    /* ─── BOTTOM MODE TABS ──────────────────────── */
+    .bottom-tabs {
+      display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap;
+    }
+    .mode-tab {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 12px; border-radius: 100px; border: 1.5px solid var(--border);
+      background: white; font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; color: var(--text-muted);
+    }
+    .mode-tab:hover { border-color: var(--primary); color: var(--primary); }
+    .mode-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .mode-tab-icon { font-size: 13px; }
+    .input-hint { font-size: 11px; color: #94a3b8; margin-left: auto; white-space: nowrap; }
 
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 9; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .msg-row { animation: fadeIn 0.3s ease; }
+
+    /* Hidden file inputs */
+    #fileInput, #cameraInput { display: none; }
 
     @media (max-width: 768px) {
       .sidebar { position: fixed; left: -272px; top: 0; bottom: 0; z-index: 20; transition: left 0.3s ease; box-shadow: none; }
       .sidebar.open { left: 0; box-shadow: 4px 0 24px rgba(0,0,0,0.12); }
       .sidebar-overlay.show { display: block; }
       .mobile-menu-btn { display: flex; }
-      .messages { padding: 20px 16px; }
-      .input-area { padding: 12px 16px 16px; }
-      .mode-tabs { flex-wrap: wrap; }
+      .mobile-logout-btn { display: flex; }
+      .messages { padding: 16px 14px; }
+      .input-area { padding: 8px 14px 12px; }
+      .input-hint { display: none; }
+      .gen-settings { gap: 8px; }
     }
   </style>
 </head>
 <body>
+  <!-- Hidden file inputs -->
+  <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx,.md,.csv,.json,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(event)" />
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" />
+
   <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
 
   <!-- Sidebar -->
@@ -331,15 +405,14 @@
       <button class="mobile-menu-btn" onclick="openSidebar()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <div>
+      <div class="header-title-group">
         <div class="chat-title" id="chatTitle">XYA AI</div>
         <div class="chat-subtitle" id="chatSubtitle">Pilih atau buat chat baru</div>
       </div>
-      <div class="mode-tabs">
-        <button class="mode-tab active" id="tab-chat" onclick="setMode('chat')"><span>💬</span> Chat</button>
-        <button class="mode-tab" id="tab-image" onclick="setMode('image')"><span>🎨</span> <span id="tab-image-label">Gambar</span></button>
-        <button class="mode-tab" id="tab-video" onclick="setMode('video')"><span>🎬</span> Video</button>
-      </div>
+      <!-- Mobile logout button — visible only on mobile -->
+      <button class="mobile-logout-btn" title="Logout" onclick="logout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     </header>
 
     <div class="messages" id="messages">
@@ -361,49 +434,149 @@
     </div>
 
     <div class="input-area">
-      <!-- Image/Video settings panel -->
+      <!-- Gen settings panel — shown when image/video mode active -->
       <div class="gen-settings" id="genSettings">
         <div class="api-key-row">
           <label>🔑 Ruxa.ai API Key:</label>
           <input type="password" id="ruxaApiKey" placeholder="Masukkan API Key Ruxa.ai..." />
         </div>
-        <div class="gen-setting-item" id="imageSettingsRow">
-          <label>Ukuran:</label>
-          <select id="imageSize">
-            <option value="1024x1024">1024×1024</option>
-            <option value="512x512">512×512</option>
-            <option value="768x768">768×768</option>
-            <option value="1024x768">1024×768</option>
-            <option value="768x1024">768×1024</option>
-          </select>
-          <label style="margin-left:8px;">Model:</label>
-          <select id="imageModel">
-            <option value="flux-schnell">Flux Schnell</option>
-            <option value="flux-dev">Flux Dev</option>
-            <option value="stable-diffusion-xl">SDXL</option>
-          </select>
+
+        <!-- Image settings -->
+        <div class="gen-row" id="imageSettingsRow">
+          <div class="gen-setting-item">
+            <label>Model:</label>
+            <select id="imageModel">
+              <option value="flux-schnell">Flux Schnell</option>
+              <option value="flux-dev">Flux Dev</option>
+              <option value="flux-pro">Flux Pro</option>
+              <option value="stable-diffusion-xl">SDXL</option>
+              <option value="ideogram">Ideogram</option>
+            </select>
+          </div>
+          <div class="gen-setting-item">
+            <label>Ukuran:</label>
+            <select id="imageSize">
+              <option value="1024x1024">1024×1024</option>
+              <option value="512x512">512×512</option>
+              <option value="768x768">768×768</option>
+              <option value="1024x768">1024×768 (Landscape)</option>
+              <option value="768x1024">768×1024 (Portrait)</option>
+              <option value="1280x720">1280×720 (HD)</option>
+              <option value="1920x1080">1920×1080 (Full HD)</option>
+            </select>
+          </div>
+          <div class="gen-setting-item">
+            <label>Kualitas:</label>
+            <select id="imageQuality">
+              <option value="standard">Standard</option>
+              <option value="hd">HD</option>
+            </select>
+          </div>
+          <div class="gen-setting-item">
+            <label>Jumlah:</label>
+            <select id="imageCount">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="4">4</option>
+            </select>
+          </div>
+          <div class="gen-setting-item">
+            <label>Gaya:</label>
+            <select id="imageStyle">
+              <option value="">Default</option>
+              <option value="photorealistic">Fotorealistik</option>
+              <option value="cinematic">Sinematik</option>
+              <option value="anime">Anime</option>
+              <option value="digital-art">Digital Art</option>
+              <option value="oil-painting">Lukisan Minyak</option>
+              <option value="watercolor">Cat Air</option>
+              <option value="sketch">Sketsa</option>
+            </select>
+          </div>
+          <div class="gen-negative-row">
+            <label>Negative:</label>
+            <input type="text" id="imageNegative" placeholder="Hal yang tidak diinginkan dalam gambar..." />
+          </div>
         </div>
-        <div class="gen-setting-item" id="videoSettingsRow" style="display:none;">
-          <label>Durasi:</label>
-          <select id="videoDuration">
-            <option value="4">4 detik</option>
-            <option value="8">8 detik</option>
-          </select>
-          <label style="margin-left:8px;">Model:</label>
-          <select id="videoModel">
-            <option value="wan-t2v">Wan T2V</option>
-            <option value="kling-1.5">Kling 1.5</option>
-          </select>
+
+        <!-- Video settings -->
+        <div class="gen-row" id="videoSettingsRow" style="display:none;">
+          <div class="gen-setting-item">
+            <label>Model:</label>
+            <select id="videoModel">
+              <option value="wan-t2v">Wan T2V</option>
+              <option value="kling-1.5">Kling 1.5</option>
+              <option value="kling-2.0">Kling 2.0</option>
+              <option value="luma-dream-machine">Luma Dream Machine</option>
+              <option value="minimax-video">MiniMax Video</option>
+            </select>
+          </div>
+          <div class="gen-setting-item">
+            <label>Durasi:</label>
+            <select id="videoDuration">
+              <option value="4">4 detik</option>
+              <option value="5">5 detik</option>
+              <option value="8">8 detik</option>
+              <option value="10">10 detik</option>
+            </select>
+          </div>
+          <div class="gen-setting-item">
+            <label>Resolusi:</label>
+            <select id="videoResolution">
+              <option value="720p">720p</option>
+              <option value="1080p">1080p</option>
+              <option value="480p">480p</option>
+            </select>
+          </div>
+          <div class="gen-setting-item">
+            <label>Rasio:</label>
+            <select id="videoAspect">
+              <option value="16:9">16:9</option>
+              <option value="9:16">9:16 (Vertikal)</option>
+              <option value="1:1">1:1</option>
+              <option value="4:3">4:3</option>
+            </select>
+          </div>
         </div>
       </div>
 
+      <!-- File preview area -->
+      <div class="file-preview-area" id="filePreviewArea"></div>
+
+      <!-- Main input -->
       <div class="input-wrap">
+        <div class="left-actions">
+          <button class="action-btn" title="Upload file" onclick="document.getElementById('fileInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </button>
+          <button class="action-btn" title="Foto / Kamera" onclick="document.getElementById('cameraInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </button>
+        </div>
         <textarea id="msgInput" rows="1" placeholder="Tulis pesan..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
         <button class="send-btn" id="sendBtn" onclick="handleSend()" title="Kirim">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
-      <div class="input-hint" id="inputHint">Enter untuk kirim • Shift+Enter untuk baris baru</div>
+
+      <!-- Bottom mode tabs -->
+      <div class="bottom-tabs">
+        <button class="mode-tab active" id="tab-chat" onclick="setMode('chat')">
+          <span class="mode-tab-icon">💬</span> Chat
+        </button>
+        <button class="mode-tab" id="tab-image" onclick="setMode('image')">
+          <span class="mode-tab-icon">🎨</span> <span id="tab-image-label">Gambar</span>
+        </button>
+        <button class="mode-tab" id="tab-video" onclick="setMode('video')">
+          <span class="mode-tab-icon">🎬</span> Video
+        </button>
+        <span class="input-hint" id="inputHint">Enter kirim • Shift+Enter baris baru</span>
+      </div>
     </div>
   </div>
 
@@ -415,7 +588,8 @@
     let activeConvId = null;
     let lang = localStorage.getItem('xyabot_lang') || 'id';
     let isStreaming = false;
-    let currentMode = 'chat'; // 'chat' | 'image' | 'video'
+    let currentMode = 'chat';
+    let pendingFile = null; // { name, type, dataUrl, isImage }
 
     const i18n = {
       id: {
@@ -424,7 +598,7 @@
         'welcome-desc': 'Saya XYA AI, siap membantu menjawab pertanyaan, menulis konten, generate gambar & video, dan banyak lagi.',
         'chatSubtitle-noconv': 'Pilih atau buat chat baru', 'chatSubtitle-active': 'XYA AI siap membantu',
         'placeholder': 'Tulis pesan...', 'placeholder-image': 'Deskripsikan gambar yang ingin dibuat...', 'placeholder-video': 'Deskripsikan video yang ingin dibuat...',
-        'inputHint': 'Enter untuk kirim • Shift+Enter untuk baris baru',
+        'inputHint': 'Enter kirim • Shift+Enter baris baru',
         'chips': ['✍️ Bantu saya menulis','💻 Jelaskan kode ini','🔍 Ringkaskan teks','💡 Beri saya ide','📧 Tulis email','🌐 Terjemahkan'],
         'you': 'Kamu', 'thinking': 'Sedang berpikir...',
         'tab-image-label': 'Gambar',
@@ -459,7 +633,6 @@
         if (user.avatar) {
           document.getElementById('userAvatar').innerHTML = `<img src="${user.avatar}" alt="${user.name}">`;
         }
-        // Restore saved API key
         const savedKey = localStorage.getItem('ruxa_api_key');
         if (savedKey) document.getElementById('ruxaApiKey').value = savedKey;
         applyLang(lang, false);
@@ -516,6 +689,39 @@
       else document.getElementById('chatSubtitle').textContent = t('chatSubtitle-active');
     }
     function setLang(l) { applyLang(l); }
+
+    // ─── File Handling ───────────────────────────────────────────
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      event.target.value = '';
+
+      const isImage = file.type.startsWith('image/');
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        pendingFile = { name: file.name, type: file.type, dataUrl: e.target.result, isImage };
+        renderFilePreview();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderFilePreview() {
+      const area = document.getElementById('filePreviewArea');
+      if (!pendingFile) { area.innerHTML = ''; area.classList.remove('show'); return; }
+      area.classList.add('show');
+      const isImg = pendingFile.isImage;
+      area.innerHTML = `
+        ${isImg ? `<img class="file-img-preview" src="${pendingFile.dataUrl}" alt="preview" />` : ''}
+        <div class="file-badge">
+          ${isImg ? '🖼️' : '📄'} ${escHtml(pendingFile.name.length > 30 ? pendingFile.name.slice(0,27)+'...' : pendingFile.name)}
+          <button class="file-badge-remove" onclick="clearFile()">×</button>
+        </div>`;
+    }
+
+    function clearFile() {
+      pendingFile = null;
+      renderFilePreview();
+    }
 
     // ─── Conversations ───────────────────────────────────────────
     async function loadConversations() {
@@ -574,7 +780,12 @@
       e.stopPropagation();
       await fetch(`/api/conversations/${id}`, { method: 'DELETE' });
       conversations = conversations.filter(c => c.id !== id);
-      if (activeConvId === id) { activeConvId = null; showWelcome(); document.getElementById('chatTitle').textContent = 'XYA AI'; document.getElementById('chatSubtitle').textContent = t('chatSubtitle-noconv'); }
+      if (activeConvId === id) {
+        activeConvId = null;
+        showWelcome();
+        document.getElementById('chatTitle').textContent = 'XYA AI';
+        document.getElementById('chatSubtitle').textContent = t('chatSubtitle-noconv');
+      }
       renderConvList();
     }
 
@@ -627,11 +838,30 @@
       return row;
     }
 
+    function appendMessageWithImage(imageDataUrl, text) {
+      const container = document.getElementById('messages');
+      const welcome = document.getElementById('welcome');
+      if (welcome) welcome.remove();
+      const row = document.createElement('div');
+      row.className = 'msg-row user-row-msg';
+      const avatarHtml = `<div class="msg-avatar-chat user">${user?.avatar ? `<img src="${user.avatar}">` : '👤'}</div>`;
+      row.innerHTML = `
+        ${avatarHtml}
+        <div class="msg-content">
+          <div class="msg-sender">${t('you')}</div>
+          <div class="msg-bubble-chat user-bubble">
+            <img class="user-image-preview" src="${imageDataUrl}" alt="uploaded" />
+            ${text ? `<div style="margin-top:6px;">${escHtml(text)}</div>` : ''}
+          </div>
+        </div>`;
+      container.appendChild(row);
+      scrollBottom();
+    }
+
     function appendTyping() {
       const container = document.getElementById('messages');
       const welcome = document.getElementById('welcome');
       if (welcome) welcome.remove();
-
       const row = document.createElement('div');
       row.className = 'msg-row'; row.id = 'typingRow';
       row.innerHTML = `
@@ -650,7 +880,6 @@
       const container = document.getElementById('messages');
       const welcome = document.getElementById('welcome');
       if (welcome) welcome.remove();
-
       const row = document.createElement('div');
       row.className = 'msg-row'; row.id = 'typingRow';
       const label = mode === 'image' ? t('gen-img-label') : t('gen-vid-label');
@@ -683,20 +912,34 @@
       if (isStreaming) return;
       const input = document.getElementById('msgInput');
       const text = input.value.trim();
-      if (!text) return;
+      if (!text && !pendingFile) return;
       if (!activeConvId) { await newChat(); }
+
+      let messageText = text;
+      let fileToSend = pendingFile;
+      pendingFile = null;
+      renderFilePreview();
 
       input.value = ''; autoResize(input);
       document.getElementById('sendBtn').disabled = true;
       isStreaming = true;
 
-      appendMessage('user', text);
+      // Show user message with image if present
+      if (fileToSend && fileToSend.isImage) {
+        appendMessageWithImage(fileToSend.dataUrl, text);
+        messageText = text + (text ? '\n\n' : '') + `[Gambar: ${fileToSend.name}]`;
+      } else if (fileToSend) {
+        appendMessage('user', `📄 ${fileToSend.name}${text ? '\n' + text : ''}`);
+        messageText = `Tolong analisis file ini: ${fileToSend.name}\n\n${text}`;
+      } else {
+        appendMessage('user', text);
+      }
       appendTyping();
 
       try {
         const res = await fetch('/api/chat', {
           method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ conversationId: activeConvId, message: text, language: lang })
+          body: JSON.stringify({ conversationId: activeConvId, message: messageText, language: lang })
         });
 
         const bubble = document.getElementById('streamBubble');
@@ -736,7 +979,7 @@
     async function generateImage() {
       if (isStreaming) return;
       const input = document.getElementById('msgInput');
-      const prompt = input.value.trim();
+      let prompt = input.value.trim();
       if (!prompt) return;
 
       const apiKey = document.getElementById('ruxaApiKey').value.trim();
@@ -748,7 +991,14 @@
 
       const size = document.getElementById('imageSize').value;
       const model = document.getElementById('imageModel').value;
+      const quality = document.getElementById('imageQuality').value;
+      const count = parseInt(document.getElementById('imageCount').value);
+      const style = document.getElementById('imageStyle').value;
+      const negative = document.getElementById('imageNegative').value.trim();
       const [width, height] = size.split('x').map(Number);
+
+      // Append style to prompt if selected
+      if (style) prompt = `${prompt}, ${style} style`;
 
       input.value = ''; autoResize(input);
       document.getElementById('sendBtn').disabled = true;
@@ -758,19 +1008,14 @@
       appendGenStatus(prompt, 'image');
 
       try {
+        const body = { model, prompt, width, height, n: count };
+        if (quality === 'hd') body.quality = 'hd';
+        if (negative) body.negative_prompt = negative;
+
         const res = await fetch('https://api.ruxa.ai/v1/images/generations', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: model,
-            prompt: prompt,
-            width: width,
-            height: height,
-            n: 1
-          })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+          body: JSON.stringify(body)
         });
 
         const bubble = document.getElementById('streamBubble');
@@ -782,19 +1027,22 @@
         }
 
         const data = await res.json();
-        const imageUrl = data.data?.[0]?.url || data.data?.[0]?.b64_json;
+        const images = data.data || [];
 
-        if (!imageUrl) {
+        if (!images.length) {
           bubble.innerHTML = `<span style="color:#ef4444">Tidak ada gambar yang dikembalikan dari API.</span>`;
           return;
         }
 
-        const isBase64 = !imageUrl.startsWith('http');
-        const imgSrc = isBase64 ? `data:image/png;base64,${imageUrl}` : imageUrl;
+        const imgHtmlArr = images.map(img => {
+          const url = img.url || img.b64_json;
+          const src = url.startsWith('http') ? url : `data:image/png;base64,${url}`;
+          return `<img src="${src}" alt="${escHtml(prompt)}" onclick="window.open(this.src,'_blank')" />`;
+        });
 
         bubble.innerHTML = `
-          <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">✅ ${lang==='id'?'Gambar berhasil dibuat':'Image generated successfully'}</div>
-          <div class="gen-image-wrap"><img src="${imgSrc}" alt="${escHtml(prompt)}" /></div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">✅ ${lang==='id'?'Gambar berhasil dibuat':'Image generated successfully'} (${images.length} ${lang==='id'?'gambar':'image'}${images.length>1?'s':''})</div>
+          <div class="${images.length > 1 ? 'gen-image-grid' : 'gen-image-wrap'}">${imgHtmlArr.join('')}</div>
           <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">📝 ${escHtml(prompt)}</div>`;
         scrollBottom();
 
@@ -823,6 +1071,8 @@
 
       const duration = parseInt(document.getElementById('videoDuration').value);
       const model = document.getElementById('videoModel').value;
+      const resolution = document.getElementById('videoResolution').value;
+      const aspect = document.getElementById('videoAspect').value;
 
       input.value = ''; autoResize(input);
       document.getElementById('sendBtn').disabled = true;
@@ -832,18 +1082,10 @@
       appendGenStatus(prompt, 'video');
 
       try {
-        // Submit video generation job
         const res = await fetch('https://api.ruxa.ai/v1/videos/generations', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: model,
-            prompt: prompt,
-            duration: duration
-          })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+          body: JSON.stringify({ model, prompt, duration, resolution, aspect_ratio: aspect })
         });
 
         const bubble = document.getElementById('streamBubble');
@@ -851,6 +1093,8 @@
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           bubble.innerHTML = `<span style="color:#ef4444">Error ${res.status}: ${escHtml(err.error?.message || err.message || 'Gagal generate video')}</span>`;
+          document.getElementById('sendBtn').disabled = false;
+          isStreaming = false;
           return;
         }
 
@@ -858,7 +1102,6 @@
         const taskId = jobData.id || jobData.task_id;
 
         if (!taskId) {
-          // Maybe direct URL returned
           const videoUrl = jobData.data?.[0]?.url;
           if (videoUrl) {
             bubble.innerHTML = `
@@ -866,22 +1109,25 @@
               <div class="gen-video-wrap"><video src="${videoUrl}" controls></video></div>
               <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">📝 ${escHtml(prompt)}</div>`;
             scrollBottom();
-            return;
+          } else {
+            bubble.innerHTML = `<span style="color:#ef4444">Tidak ada task ID yang dikembalikan.</span>`;
           }
-          bubble.innerHTML = `<span style="color:#ef4444">Tidak ada task ID yang dikembalikan.</span>`;
+          document.getElementById('sendBtn').disabled = false;
+          isStreaming = false;
           return;
         }
 
-        // Poll for completion
-        bubble.innerHTML = `<div class="gen-status"><div class="spinner"></div><span>${lang==='id'?'Memproses video... (ini mungkin memakan waktu beberapa menit)':'Processing video... (this may take a few minutes)'}</span></div>`;
+        bubble.innerHTML = `<div class="gen-status"><div class="spinner"></div><span>${lang==='id'?'Memproses video... (ini mungkin memakan beberapa menit)':'Processing video... (this may take a few minutes)'}</span></div>`;
         scrollBottom();
 
         let attempts = 0;
-        const maxAttempts = 60; // 5 minutes max
+        const maxAttempts = 72; // 6 minutes
 
         const poll = async () => {
           if (attempts >= maxAttempts) {
             bubble.innerHTML = `<span style="color:#ef4444">${lang==='id'?'Timeout: video terlalu lama diproses':'Timeout: video took too long to process'}</span>`;
+            document.getElementById('sendBtn').disabled = false;
+            isStreaming = false;
             return;
           }
           attempts++;
@@ -904,10 +1150,13 @@
               } else {
                 bubble.innerHTML = `<span style="color:#ef4444">Video selesai tapi URL tidak ditemukan.</span>`;
               }
+              document.getElementById('sendBtn').disabled = false;
+              isStreaming = false;
             } else if (status === 'failed' || status === 'error') {
               bubble.innerHTML = `<span style="color:#ef4444">${lang==='id'?'Generate video gagal':'Video generation failed'}: ${escHtml(statusData.error || '')}</span>`;
+              document.getElementById('sendBtn').disabled = false;
+              isStreaming = false;
             } else {
-              // Still processing
               const pct = statusData.progress ? ` (${Math.round(statusData.progress * 100)}%)` : '';
               bubble.innerHTML = `<div class="gen-status"><div class="spinner"></div><span>${lang==='id'?'Memproses video':'Processing video'}${pct}...</span></div>`;
               scrollBottom();
@@ -926,11 +1175,6 @@
         document.getElementById('sendBtn').disabled = false;
         isStreaming = false;
       }
-      // Note: for video, isStreaming is reset inside polling callbacks
-      // We keep the button disabled during polling
-      // Reset is done after polling
-      document.getElementById('sendBtn').disabled = false;
-      isStreaming = false;
     }
 
     function sendChip(el) {
