@@ -1,17 +1,14 @@
-import { getOpenAIClient, IMAGE_MODEL } from "../config/aiConfig";
-import type { BrainOutput } from "../ai/brain";
-import { logger } from "../lib/logger";
+// tools/imageTool.js — Eksekutor image generator (DALL-E)
+// RULE: hanya eksekusi, tidak ada decision logic
 
-export async function runImageTool(prompt: string): Promise<BrainOutput> {
+import { getOpenAIClient, IMAGE_MODEL } from "../config/aiConfig.js";
+
+export async function runImageTool(prompt) {
   const client = getOpenAIClient();
-
-  const enhancedPrompt = `High quality, detailed: ${prompt}`;
-
-  logger.info({ model: IMAGE_MODEL, prompt: prompt.slice(0, 80) }, "Running image tool");
 
   const response = await client.images.generate({
     model: IMAGE_MODEL,
-    prompt: enhancedPrompt,
+    prompt: `High quality, detailed: ${prompt}`,
     n: 1,
     size: "1024x1024",
     quality: "standard",
@@ -20,15 +17,12 @@ export async function runImageTool(prompt: string): Promise<BrainOutput> {
   const imageUrl = response.data?.[0]?.url;
 
   if (!imageUrl) {
-    return {
-      type: "image",
-      content: "Gagal menghasilkan gambar. Coba lagi dengan deskripsi yang berbeda.",
-    };
+    return { type: "image", content: "Gagal menghasilkan gambar. Coba dengan deskripsi berbeda." };
   }
 
   return {
     type: "image",
-    content: `Gambar berhasil dibuat berdasarkan prompt: "${prompt}"`,
+    content: `Gambar berhasil dibuat untuk: "${prompt}"`,
     imageUrl,
   };
 }

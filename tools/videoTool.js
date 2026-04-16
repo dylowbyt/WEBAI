@@ -1,20 +1,18 @@
-import { getOpenAIClient, AI_MODEL } from "../config/aiConfig";
-import type { BrainOutput } from "../ai/brain";
-import { logger } from "../lib/logger";
+// tools/videoTool.js — Eksekutor konsep video
+// RULE: hanya eksekusi, tidak ada decision logic
 
-export async function runVideoTool(prompt: string): Promise<BrainOutput> {
+import { getOpenAIClient, AI_MODEL } from "../config/aiConfig.js";
+
+export async function runVideoTool(prompt) {
   const client = getOpenAIClient();
-
-  logger.info({ prompt: prompt.slice(0, 80) }, "Running video tool");
-
-  const systemMsg = `Kamu adalah ahli video dan sinematografi. 
-Tugasmu adalah membuat konsep video yang detail dan lengkap dari deskripsi user.
-Berikan: storyboard ringkas, shot list, narasi, dan rekomendasi teknis.`;
 
   const response = await client.chat.completions.create({
     model: AI_MODEL,
     messages: [
-      { role: "system", content: systemMsg },
+      {
+        role: "system",
+        content: `Kamu adalah ahli video dan sinematografi. Buat konsep video yang detail: storyboard ringkas, shot list, narasi, dan rekomendasi teknis.`
+      },
       { role: "user", content: `Buat konsep video untuk: ${prompt}` },
     ],
     max_tokens: 1500,
@@ -22,9 +20,5 @@ Berikan: storyboard ringkas, shot list, narasi, dan rekomendasi teknis.`;
   });
 
   const content = response.choices[0]?.message?.content ?? "Gagal membuat konsep video.";
-
-  return {
-    type: "video",
-    content,
-  };
+  return { type: "video", content };
 }
