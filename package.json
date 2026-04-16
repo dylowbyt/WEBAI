@@ -1,21 +1,16 @@
 {
-  "name": "xyabot-ai",
+  "name": "aira-ai-assistant",
   "version": "1.0.0",
-  "description": "XYABOT AI - Smart AI Assistant",
+  "type": "module",
+  "description": "AIRA — AI Assistant dengan Brain System Architecture",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
   "dependencies": {
-    "openai": "^4.47.0",
-    "better-sqlite3": "^9.4.3",
     "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "express-session": "^1.17.3",
-    "passport": "^0.7.0",
-    "passport-google-oauth20": "^2.0.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "express": "^5.0.0",
+    "openai": "^4.0.0"
   }
 }
