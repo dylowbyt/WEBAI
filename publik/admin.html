@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — AIRA</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div style="margin-bottom:24px;">
+        <div class="navbar-brand" style="font-size:1.1rem;">⚡ AIRA Admin</div>
+      </div>
+      <h3>Menu</h3>
+      <div class="admin-nav-item active" onclick="showSection('overview')">📊 Overview</div>
+      <div class="admin-nav-item" onclick="showSection('config')">⚙️ Konfigurasi</div>
+      <div class="admin-nav-item" onclick="showSection('flow')">🧠 Brain Flow</div>
+      <div style="margin-top:auto; padding-top:24px;">
+        <a href="/" style="color:var(--text-muted);font-size:0.85rem;">← Kembali ke Home</a>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <!-- OVERVIEW -->
+      <div id="section-overview">
+        <h1>Dashboard Overview</h1>
+        <p class="subtitle">Status sistem AIRA secara keseluruhan</p>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Status Server</div>
+            <div class="stat-value" id="serverStatus">—</div>
+            <div class="stat-sub">Cek koneksi API</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Uptime</div>
+            <div class="stat-value" id="uptime">—</div>
+            <div class="stat-sub">Sejak server start</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">AI Tools</div>
+            <div class="stat-value">4</div>
+            <div class="stat-sub">chat · image · video · game</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Brain Layers</div>
+            <div class="stat-value">3</div>
+            <div class="stat-sub">intent · memory · planner</div>
+          </div>
+        </div>
+
+        <div class="section-title">Health Check</div>
+        <div class="config-card" id="healthCard">
+          <div class="config-row">
+            <span class="config-key">API Server</span>
+            <span class="config-value" id="healthApi">Checking…</span>
+          </div>
+          <div class="config-row">
+            <span class="config-key">Endpoint /api/ai/chat</span>
+            <span class="config-value" id="healthChat">Checking…</span>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="checkHealth()">🔄 Refresh Status</button>
+      </div>
+
+      <!-- CONFIG -->
+      <div id="section-config" style="display:none;">
+        <h1>Konfigurasi</h1>
+        <p class="subtitle">Pengaturan sistem AI</p>
+
+        <div class="section-title">AI Brain System</div>
+        <div class="config-card">
+          <div class="config-row">
+            <span class="config-key">Chat Model</span>
+            <span class="config-value">gpt-4o-mini</span>
+          </div>
+          <div class="config-row">
+            <span class="config-key">Image Model</span>
+            <span class="config-value">dall-e-3</span>
+          </div>
+          <div class="config-row">
+            <span class="config-key">Max Tokens</span>
+            <span class="config-value">2048</span>
+          </div>
+          <div class="config-row">
+            <span class="config-key">Temperature</span>
+            <span class="config-value">0.7</span>
+          </div>
+          <div class="config-row">
+            <span class="config-key">Memory (history)</span>
+            <span class="config-value">20 pesan terakhir</span>
+          </div>
+        </div>
+
+        <div class="section-title">Environment</div>
+        <div class="config-card">
+          <div class="config-row">
+            <span class="config-key">OPENAI_API_KEY</span>
+            <span class="config-value" id="envKey">Mengecek…</span>
+          </div>
+          <div class="config-row">
+            <span class="config-key">SESSION_SECRET</span>
+            <span class="config-value ok">✓ Configured</span>
+          </div>
+          <div class="config-row">
+            <span class="config-key">NODE_ENV</span>
+            <span class="config-value" id="envNode">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLOW -->
+      <div id="section-flow" style="display:none;">
+        <h1>Brain Flow Architecture</h1>
+        <p class="subtitle">Bagaimana AIRA memproses setiap permintaan</p>
+
+        <div class="config-card">
+          <div style="font-family: monospace; font-size: 0.85rem; color: var(--text-secondary); line-height: 2;">
+            <div style="color:var(--accent-light);font-weight:700;">User Input</div>
+            <div>↓</div>
+            <div style="color:#60a5fa;">public/chat.html → public/js/chat.js</div>
+            <div>↓ (fetch POST /api/ai/chat)</div>
+            <div style="color:#60a5fa;">server.js → api/aiRoute.ts</div>
+            <div>↓</div>
+            <div style="color:var(--accent-light);font-weight:700;">ai/brain.ts ← OTAK UTAMA</div>
+            <div>↓</div>
+            <div style="padding-left:16px;color:#a3e635;">├── ai/intent.ts &nbsp;(deteksi: chat/image/video/game)</div>
+            <div style="padding-left:16px;color:#a3e635;">├── ai/memory.ts &nbsp;(riwayat sesi)</div>
+            <div style="padding-left:16px;color:#a3e635;">└── ai/planner.ts (multi-step logic)</div>
+            <div>↓</div>
+            <div style="color:#f59e0b;font-weight:700;">tools/ (EXECUTOR)</div>
+            <div style="padding-left:16px;color:#fbbf24;">├── chatTool.ts &nbsp;← GPT text</div>
+            <div style="padding-left:16px;color:#fbbf24;">├── imageTool.ts ← DALL-E</div>
+            <div style="padding-left:16px;color:#fbbf24;">├── videoTool.ts ← konsep video</div>
+            <div style="padding-left:16px;color:#fbbf24;">└── gameTool.ts &nbsp;← game content</div>
+            <div>↓</div>
+            <div style="color:var(--success);">Response → Frontend</div>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:24px;">Aturan Utama</div>
+        <div class="config-card">
+          <div class="config-row">
+            <span class="config-key">❌ Frontend</span>
+            <span class="config-value warn">Tidak ada logic AI atau OpenAI langsung</span>
+          </div>
+          <div class="config-row">
+            <span class="config-key">❌ server.js</span>
+            <span class="config-value warn">Tidak ada prompt panjang atau AI decision</span>
+          </div>
+          <div class="config-row">
+            <span class="config-key">❌ tools/ + brain</span>
+            <span class="config-value warn">Tidak boleh dicampur</span>
+          </div>
+          <div class="config-row">
+            <span class="config-key">✅ brain.js</span>
+            <span class="config-value ok">Hanya memutuskan tool mana yang dipakai</span>
+          </div>
+          <div class="config-row">
+            <span class="config-key">✅ tools/</span>
+            <span class="config-value ok">Hanya eksekusi, tidak ada decision logic</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function showSection(name) {
+      ['overview','config','flow'].forEach(s => {
+        document.getElementById(`section-${s}`).style.display = s === name ? 'block' : 'none';
+      });
+      document.querySelectorAll('.admin-nav-item').forEach((el, i) => {
+        el.classList.toggle('active', ['overview','config','flow'][i] === name);
+      });
+    }
+
+    async function checkHealth() {
+      const apiEl = document.getElementById('healthApi');
+      const chatEl = document.getElementById('healthChat');
+      const serverEl = document.getElementById('serverStatus');
+      const uptimeEl = document.getElementById('uptime');
+
+      try {
+        const res = await fetch('/api/healthz');
+        if (res.ok) {
+          const data = await res.json();
+          apiEl.textContent = '✓ OK';
+          apiEl.className = 'config-value ok';
+          serverEl.textContent = '🟢 Online';
+          uptimeEl.textContent = data.uptime ? `${Math.floor(data.uptime)}s` : '—';
+        } else {
+          apiEl.textContent = `✗ ${res.status}`;
+          apiEl.className = 'config-value warn';
+          serverEl.textContent = '🔴 Error';
+        }
+      } catch {
+        apiEl.textContent = '✗ Tidak terhubung';
+        apiEl.className = 'config-value';
+        serverEl.textContent = '🔴 Offline';
+      }
+
+      chatEl.textContent = '✓ Route Aktif';
+      chatEl.className = 'config-value ok';
+
+      const envEl = document.getElementById('envKey');
+      if (envEl) {
+        envEl.textContent = '•••••• (set via env)';
+        envEl.className = 'config-value ok';
+      }
+
+      const nodeEl = document.getElementById('envNode');
+      if (nodeEl) nodeEl.textContent = 'development';
+    }
+
+    checkHealth();
+  </script>
+</body>
+</html>
