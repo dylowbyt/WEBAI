@@ -1,29 +1,16 @@
-export interface Message {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
+// ai/memory.js — Memory user / context sesi
 
-export interface ConversationMemory {
-  messages: Message[];
-  userId?: string;
-  sessionId: string;
-}
-
-const memoryStore = new Map<string, ConversationMemory>();
-
+const memoryStore = new Map();
 const MAX_HISTORY = 20;
 
-export function getMemory(sessionId: string): ConversationMemory {
+export function getMemory(sessionId) {
   if (!memoryStore.has(sessionId)) {
-    memoryStore.set(sessionId, {
-      sessionId,
-      messages: [],
-    });
+    memoryStore.set(sessionId, { sessionId, messages: [] });
   }
-  return memoryStore.get(sessionId)!;
+  return memoryStore.get(sessionId);
 }
 
-export function addMessage(sessionId: string, message: Message): void {
+export function addMessage(sessionId, message) {
   const memory = getMemory(sessionId);
   memory.messages.push(message);
   if (memory.messages.length > MAX_HISTORY) {
@@ -31,10 +18,10 @@ export function addMessage(sessionId: string, message: Message): void {
   }
 }
 
-export function clearMemory(sessionId: string): void {
+export function clearMemory(sessionId) {
   memoryStore.delete(sessionId);
 }
 
-export function getHistory(sessionId: string): Message[] {
+export function getHistory(sessionId) {
   return getMemory(sessionId).messages;
 }
